@@ -11,9 +11,9 @@ import ch.ploetzli.xbmc.Utils;
 public class HttpApi {
 	private String baseurl;
 	
-	public HttpApi()
+	public HttpApi(String address, int port)
 	{
-		baseurl = "http://192.168.146.110:8080//xbmcCmds/xbmcHttp";
+		baseurl = "http://"+address+":"+port+"/xbmcCmds/xbmcHttp";
 	}
 	
 	protected HttpConnection openCommandConnection(String cmd) throws IOException
