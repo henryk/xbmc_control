@@ -21,10 +21,10 @@ public class HttpApi {
 		HttpConnection conn = (HttpConnection)Connector.open(baseurl + "?command=" + Utils.URIEscape(cmd));
 		
 		int rc = conn.getResponseCode();
-        if (rc != HttpConnection.HTTP_OK) {
-            throw new IOException("HTTP response code: " + rc);
-        }
-
+		if (rc != HttpConnection.HTTP_OK) {
+			throw new IOException("HTTP response code: " + rc);
+		}
+		
 		return conn;
 	}
 	
