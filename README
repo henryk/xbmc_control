@@ -1,0 +1,3 @@
+This is a Java API for XBMC targeted at J2ME and a MIDlet for remote control and library browsing.
+
+Currently there is not much here except for a proof of concept of TV show thumbnail downloading.
