@@ -32,6 +32,7 @@ public class MdnsDiscoverer {
 				0x00, 0x0c, /* Type: PTR */
 				-128, 0x01, /* Class IN, "QU" question */
 		};
+	private final static String[] serviceName = new String[]{"_xbmc-web", "_tcp", "local"};
 	private MdnsNagThread nagThread;
 	private MdnsReceiveThread receiveThread;
 	private MdnsDiscovererListener listener;
@@ -76,9 +77,6 @@ public class MdnsDiscoverer {
 				Datagram d = conn.newDatagram(max);
 				while(!exit) {
 					conn.receive(d);
-					
-					/* Handle here */
-					System.out.println("Have response");
 					
 					synchronized(updateThread) {
 						synchronized(database) {
@@ -126,7 +124,6 @@ public class MdnsDiscoverer {
 
 				for(int i=0; i<answers; i++) {
 					String name[] = readName(d);
-					System.out.println(DnsRecord.flattenName(name));
 					int type = d.readUnsignedShort(); /* Type */
 					int clas = d.readUnsignedShort(); /* Class */
 					int ttl = d.readInt(); /* TTL */
@@ -146,7 +143,7 @@ public class MdnsDiscoverer {
 						/* A IN */
 						StringBuffer buf = new StringBuffer();
 						for(int j=0; j<4; j++) {
-							if(i!=0) buf.append(".");
+							if(j!=0) buf.append(".");
 							buf.append(Integer.toString(d.readUnsignedByte()));
 						}
 						database.addRecord(name, new ADnsRecord(buf.toString()), ttl);
@@ -247,8 +244,29 @@ public class MdnsDiscoverer {
 			 */
 			Hashtable newView = new Hashtable();
 			
-			/* For now, just fake one response */
-			newView.put("foo", new Object[]{"blacky.local", "192.168.146.110", new Integer(8080)});
+			DnsRecord[] ptrResults = database.findRecord(DnsRecord.TYPE_PTR, serviceName);
+			for(int i = 0; i<ptrResults.length; i++) {
+				PtrDnsRecord ptrRecord = (PtrDnsRecord)ptrResults[i];
+				DnsRecord[] srvResults = database.findRecord(DnsRecord.TYPE_SRV, ptrRecord.data);
+				for(int j = 0; j<srvResults.length; j++) {
+					/* In principle multiple SRV records should be evaluated according to their
+					 * priority. 
+					 */
+					SrvDnsRecord srvRecord = (SrvDnsRecord)srvResults[j];
+					DnsRecord[] aResults = database.findRecord(DnsRecord.TYPE_A, srvRecord.target);
+					if(aResults.length == 0) {
+						continue;
+					} else {
+						/* Simply use the first result */
+						ADnsRecord aRecord = (ADnsRecord)aResults[0];
+						String address = aRecord.data;
+						String name = DnsRecord.flattenName(srvRecord.target);
+						int port = srvRecord.port;
+						
+						newView.put(name+";"+address+";"+port, new Object[]{name, address, new Integer(port)});
+					}
+				}
+			}
 			
 			/* Keys are assumed to be unique since fields are separated by ; and this can't be 
 			 * found within address or port

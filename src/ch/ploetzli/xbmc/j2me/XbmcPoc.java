@@ -194,8 +194,20 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	}
 	
 	public void deviceLost(String name, String address, int port) {
-		// TODO Auto-generated method stub
+		String displayName = (name + ":" + port).intern();
+		if(devices.containsKey(displayName)) {
+			devices.remove(displayName);
+			for(int i=0; i<deviceList.size(); i++) {
+				if(deviceList.getString(i).equals(displayName)) {
+					deviceList.delete(i);
+					break;
+				}
+			}
+		} else {
+			/* Nothing to do here */
+		}
 		
+		deviceUpdate();
 	}
 	
 	public void deviceUpdate()
