@@ -193,6 +193,11 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		deviceUpdate();
 	}
 	
+	public void deviceLost(String name, String address, int port) {
+		// TODO Auto-generated method stub
+		
+	}
+	
 	public void deviceUpdate()
 	{
 		if(devices.isEmpty()) {
@@ -202,5 +207,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 			deviceList.setSelectCommand(connect);
 		}
 	}
+
 	
 }

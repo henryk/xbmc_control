@@ -1,6 +1,8 @@
 package ch.ploetzli.xbmc.api.mdns;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.microedition.io.Connector;
@@ -14,7 +16,7 @@ import javax.microedition.io.DatagramConnection;
 
 public class MdnsDiscoverer {
 	private DatagramConnection conn;
-	private final byte[] query = new byte[]{
+	private final static byte[] query = new byte[]{
 			0x00, 0x00, /* Transaction ID */
 			0x00, 0x00, /* Flags */
 			0x00, 0x01, /* Queries */
@@ -34,6 +36,9 @@ public class MdnsDiscoverer {
 	private MdnsReceiveThread receiveThread;
 	private MdnsDiscovererListener listener;
 	
+	private DnsDatabase database;
+	private MdnsUpdateThread updateThread;
+
 	private class MdnsNagThread extends Thread
 	{
 		/* This thread is responsible for repeatedly sending multicast
@@ -74,7 +79,14 @@ public class MdnsDiscoverer {
 					
 					/* Handle here */
 					System.out.println("Have response");
-					parseResponse(new PositionDatagram(d));
+					
+					synchronized(updateThread) {
+						synchronized(database) {
+							parseResponse(new PositionDatagram(d));
+						}
+					
+						updateThread.notify();
+					}
 					
 					d.reset();
 					d.setLength(max);
@@ -83,117 +95,203 @@ public class MdnsDiscoverer {
 				/* Ignore and exit */
 			}
 		}
+
+		private void parseResponse(PositionDatagram d)
+		{
+			try {
+				d.readShort(); /* Transaction id */
+				int flags = d.readUnsignedShort(); /* Flags */
+				if( (flags & 0x8000) != 0 && (flags & 0x000f) == 0 ) {
+					/* Response, no error */
+				} else {
+					return;
+				}
+				int questions = d.readUnsignedShort(); /* Questions */
+				int answers = d.readUnsignedShort();
+				int authorities = d.readUnsignedShort(); /* Authority RRs */
+				int additional = d.readUnsignedShort(); /* Additional RRs */
+
+				if(authorities > 0 || additional > 0) {
+					/* Can't parse that yet */
+					return;
+				}
+
+				/* Skip all the questions, we don't care what we asked for and will take
+				 * all answers at face value. */
+				for(int i=0; i<questions; i++) {
+					readName(d, null, d.getPosition()); /* Read and discard the name */
+					d.readUnsignedShort(); /* Type */
+					d.readUnsignedShort(); /* Class */
+				}
+
+				for(int i=0; i<answers; i++) {
+					String name[] = readName(d);
+					System.out.println(DnsRecord.flattenName(name));
+					int type = d.readUnsignedShort(); /* Type */
+					int clas = d.readUnsignedShort(); /* Class */
+					int ttl = d.readInt(); /* TTL */
+					int length = d.readUnsignedShort();
+
+					if((clas & 0x7fff) != 0x01) {
+						/* Class is not IN, we can't parse that, skip it */
+						d.skipBytes(length);
+						continue;
+					}
+
+					if(type == 0x0c) {
+						/* PTR IN */
+						String[] data = readName(d);
+						database.addRecord(name, new PtrDnsRecord(data), ttl);
+					} else if (type == 0x01) {
+						/* A IN */
+						StringBuffer buf = new StringBuffer();
+						for(int j=0; j<4; j++) {
+							if(i!=0) buf.append(".");
+							buf.append(Integer.toString(d.readUnsignedByte()));
+						}
+						database.addRecord(name, new ADnsRecord(buf.toString()), ttl);
+					} else if (type == 0x21) {
+						/* SRV IN */
+						int priority = d.readUnsignedShort();
+						int weight = d.readUnsignedShort();
+						int port = d.readUnsignedShort();
+						String target[] = readName(d);
+						database.addRecord(name, new SrvDnsRecord(priority, weight, port, target), ttl);
+					} else {
+						/* Just ignore */
+						d.skipBytes(length);
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+
+		private void readName(PositionDatagram d, Vector results, int offset) throws IOException
+		{
+			int labelLength;
+			int savedLength = d.getLength();
+
+			/* (Possibly recursive) handling of compressed names:
+			 * Jump to offset, read the name, append parts to results vector,
+			 * if reading a pointer: recursively call with new offset
+			 */
+			d.reset();
+			d.setLength(savedLength);
+			d.skipBytes(offset);
+
+			while( (labelLength = d.readUnsignedByte()) != 0 ) {
+				if( (labelLength & 0xc0) == 0xc0) {
+					/* Special casing for a compressed name. */
+					int pointer = d.readUnsignedByte();
+					pointer = pointer | ((labelLength & 0x3F) << 8);
+					offset = d.getPosition();
+					readName(d, results, pointer);
+					d.reset();
+					d.setLength(savedLength);
+					d.skipBytes(offset);
+					break; /* End the loop, a pointer is always the end of the label list */
+				}
+				byte b[] = new byte[labelLength];
+				d.readFully(b);
+				if(results != null)
+					results.addElement(new String(b));
+			}
+		}
+
+		private String[] readName(PositionDatagram d) throws IOException
+		{
+			Vector v = new Vector();
+			readName(d, v, d.getPosition());
+			String result[] = new String[v.size()];
+			v.copyInto(result);
+			return result;
+		}
 	}
 	
-	private void parseResponse(PositionDatagram d)
+	private class MdnsUpdateThread extends Thread
 	{
-		try {
-			d.readShort(); /* Transaction id */
-			int flags = d.readUnsignedShort(); /* Flags */
-			if( (flags & 0x8000) != 0 && (flags & 0x000f) == 0 ) {
-				/* Response, no error */
-			} else {
-				return;
-			}
-			int questions = d.readUnsignedShort(); /* Questions */
-			int answers = d.readUnsignedShort();
-			int authorities = d.readUnsignedShort(); /* Authority RRs */
-			int additional = d.readUnsignedShort(); /* Additional RRs */
-			
-			if(authorities > 0 || additional > 0) {
-				/* Can't parse that yet */
-				return;
-			}
-			
-			/* Skip all the questions, we know what we asked for */
-			for(int i=0; i<questions; i++) {
-				readName(d, new Vector(), d.getPosition()); /* Read and discard the name */
-				d.readUnsignedShort(); /* Type */
-				d.readUnsignedShort(); /* Class */
-			}
-			
-			for(int i=0; i<answers; i++) {
-				String name[] = readName(d);
-				System.out.println(flattenName(name));
-				int type = d.readUnsignedShort(); /* Type */
-				int clas = d.readUnsignedShort(); /* Class */
-				d.readInt(); /* TTL */
-				int length = d.readUnsignedShort();
-				if(type == 0x0c && (clas & 0x7fff) == 0x01) {
-					/* PTR IN */
-					readName(d, new Vector(), d.getPosition());
-				} else {
-					/* Just ignore */
-					d.skipBytes(length);
+		public boolean exit = false;
+		private Hashtable devices = new Hashtable();
+		private Vector newDevices = new Vector();
+		private Vector lostDevices = new Vector();
+		
+		public void run()
+		{
+			while(!exit) {
+				try {
+					synchronized(this) {
+						/* Wake up every 1s or after each packet is received to update our
+						 * view of the service landscape
+						 */
+						this.wait(1000);
+						
+						synchronized(database) {
+							database.timeoutRecords();
+							updateDeviceView();
+						}
+						
+						notifyListeners();
+					}
+				} catch(Exception e) {
+					/* Ignore */
 				}
 			}
+		}
+
+		private void updateDeviceView() {
+			/* Make a new view of the device landscape by following the XBMC PTR records
+			 * to SRV records and finally to A records. Then calculate the difference between
+			 * the new view and the old view and store in newDevices and lostDevices respectively.
+			 */
+			Hashtable newView = new Hashtable();
 			
 			/* For now, just fake one response */
-			listener.deviceFound("blacky.local", "192.168.146.110", 8080);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-	}
-	
-	private void readName(PositionDatagram d, Vector results, int offset) throws IOException
-	{
-		int labelLength;
-		int savedLength = d.getLength();
-		
-		/* (Possibly recursive) handling of compressed names:
-		 * Jump to offset, read the name, append parts to results vector,
-		 * if reading a pointer: recursively call with new offset
-		 */
-		d.reset();
-		d.setLength(savedLength);
-		d.skipBytes(offset);
-		
-		while( (labelLength = d.readUnsignedByte()) != 0 ) {
-			if( (labelLength & 0xc0) == 0xc0) {
-				/* Special casing for a compressed name. */
-				int pointer = d.readUnsignedByte();
-				pointer = pointer | ((labelLength & 0x3F) << 8);
-				offset = d.getPosition();
-				readName(d, results, pointer);
-				d.reset();
-				d.setLength(savedLength);
-				d.skipBytes(offset);
-				break; /* End the loop, a pointer is always the end of the label list */
+			newView.put("foo", new Object[]{"blacky.local", "192.168.146.110", new Integer(8080)});
+			
+			/* Keys are assumed to be unique since fields are separated by ; and this can't be 
+			 * found within address or port
+			 */
+			for(Enumeration e = newView.keys(); e.hasMoreElements(); ) {
+				String key = (String)e.nextElement();
+				if(!devices.containsKey(key)) {
+					newDevices.addElement(newView.get(key));
+				}
 			}
-			byte b[] = new byte[labelLength];
-			d.readFully(b);
-			results.addElement(new String(b));
+			for(Enumeration e = devices.keys(); e.hasMoreElements(); ) {
+				String key = (String)e.nextElement();
+				if(!newView.containsKey(key)) {
+					lostDevices.addElement(devices.get(key));
+				}
+			}
+			devices = newView;
 		}
-	}
-	
-	private String[] readName(PositionDatagram d) throws IOException
-	{
-		Vector v = new Vector();
-		readName(d, v, d.getPosition());
-		String result[] = new String[v.size()];
-		v.copyInto(result);
-		return result;
-	}
-	
-	private String flattenName(String name[])
-	{
-		StringBuffer buf = new StringBuffer();
-		for(int i=0; i<name.length; i++) {
-			if(i!=0) 
-				buf.append(".");
-			buf.append(name[i]);
+		
+		private void notifyListeners() {
+			for(Enumeration e = newDevices.elements(); e.hasMoreElements(); ) {
+				Object[] device = (Object[])e.nextElement();
+				listener.deviceFound((String)device[0], (String)device[1], ((Integer)device[2]).intValue());
+			}
+			for(Enumeration e = lostDevices.elements(); e.hasMoreElements(); ) {
+				Object[] device = (Object[])e.nextElement();
+				listener.deviceLost((String)device[0], (String)device[1], ((Integer)device[2]).intValue());
+			}
+			newDevices.removeAllElements();
+			lostDevices.removeAllElements();
 		}
-		return buf.toString();
 	}
 	
 	public MdnsDiscoverer(MdnsDiscovererListener listener) throws IOException
 	{
 		this.listener = listener;
+		this.database = new DnsDatabase();
 		conn = (DatagramConnection)Connector.open("datagram://224.0.0.251:5353");
 		this.nagThread = new MdnsNagThread();
+		this.updateThread = new MdnsUpdateThread();
 		this.receiveThread = new MdnsReceiveThread();
 		
+		this.updateThread.start();
 		this.receiveThread.start();
 		this.nagThread.start();
 	}
@@ -203,6 +301,8 @@ public class MdnsDiscoverer {
 		this.nagThread.exit = true;
 		this.receiveThread.exit = true;
 		this.receiveThread.interrupt();
+		this.updateThread.exit = true;
+		this.updateThread.interrupt();
 	}
 
 }
