@@ -1,17 +1,15 @@
 package ch.ploetzli.xbmc.api;
 
 import java.io.IOException;
+import java.util.Vector;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.Datagram;
 import javax.microedition.io.DatagramConnection;
 
 /* This is a hacked together mDNS resolver that will look specifically for the XBMC web interface.
- * Since J2ME has no explicit multicast support it will send out multiple requests with
- * the "do accept unicast responses" bit set in the hope that the responder will respond
- * to at least one of them with a unicast response. (Typically the responder will send a multicast
- * response which can not be received by J2ME. However, it limits the number of multicast responses
- * and switches to unicast after that.)
+ * Since J2ME has no explicit multicast support we will use the defined legacy procedure: Send the
+ * request from a port that is not 5353, so that the responders will fall back to unicast responses
  */
 
 public class MdnsDiscoverer {
@@ -38,9 +36,9 @@ public class MdnsDiscoverer {
 	
 	private class MdnsNagThread extends Thread
 	{
-		/* This thread is responsible for constantly sending multicast
-		 * queries in the hope that at least one of them gets a
-		 * unicast response.
+		/* This thread is responsible for repeatedly sending multicast
+		 * queries in order to detect devices that come online after our
+		 * first query.
 		 */
 		private boolean exit = false;
 		
@@ -48,10 +46,7 @@ public class MdnsDiscoverer {
 		{
 			while(!exit) {
 				try {
-					Datagram d = conn.newDatagram(query.length, "datagram://224.0.0.251:5353");
-					d.setData(query, 0, query.length);
-					conn.send(d);
-					Thread.sleep(500);
+					Datagram d = conn.newDatagram(query.length);
 					d.setData(query, 0, query.length);
 					conn.send(d);
 					
@@ -79,7 +74,7 @@ public class MdnsDiscoverer {
 					
 					/* Handle here */
 					System.out.println("Have response");
-					parseResponse(d);
+					parseResponse(new PositionDatagram(d));
 					
 					d.reset();
 					d.setLength(max);
@@ -90,9 +85,8 @@ public class MdnsDiscoverer {
 		}
 	}
 	
-	private void parseResponse(Datagram d)
+	private void parseResponse(PositionDatagram d)
 	{
-		
 		try {
 			d.readShort(); /* Transaction id */
 			int flags = d.readUnsignedShort(); /* Flags */
@@ -101,12 +95,38 @@ public class MdnsDiscoverer {
 			} else {
 				return;
 			}
-			d.readShort(); /* Questions */
+			int questions = d.readUnsignedShort(); /* Questions */
 			int answers = d.readUnsignedShort();
-			d.readShort(); /* Authority RRs */
-			d.readShort(); /* Additional RRs */
+			int authorities = d.readUnsignedShort(); /* Authority RRs */
+			int additional = d.readUnsignedShort(); /* Additional RRs */
 			
-			/* TODO Implement rest */
+			if(authorities > 0 || additional > 0) {
+				/* Can't parse that yet */
+				return;
+			}
+			
+			/* Skip all the questions, we know what we asked for */
+			for(int i=0; i<questions; i++) {
+				readName(d, new Vector(), d.getPosition()); /* Read and discard the name */
+				d.readUnsignedShort(); /* Type */
+				d.readUnsignedShort(); /* Class */
+			}
+			
+			for(int i=0; i<answers; i++) {
+				String name[] = readName(d);
+				System.out.println(flattenName(name));
+				int type = d.readUnsignedShort(); /* Type */
+				int clas = d.readUnsignedShort(); /* Class */
+				d.readInt(); /* TTL */
+				int length = d.readUnsignedShort();
+				if(type == 0x0c && (clas & 0x7fff) == 0x01) {
+					/* PTR IN */
+					readName(d, new Vector(), d.getPosition());
+				} else {
+					/* Just ignore */
+					d.skipBytes(length);
+				}
+			}
 			
 			/* For now, just fake one response */
 			listener.deviceFound("blacky.local", "192.168.146.110", 8080);
@@ -116,10 +136,61 @@ public class MdnsDiscoverer {
 		
 	}
 	
+	private void readName(PositionDatagram d, Vector results, int offset) throws IOException
+	{
+		int labelLength;
+		int savedLength = d.getLength();
+		
+		/* (Possibly recursive) handling of compressed names:
+		 * Jump to offset, read the name, append parts to results vector,
+		 * if reading a pointer: recursively call with new offset
+		 */
+		d.reset();
+		d.setLength(savedLength);
+		d.skipBytes(offset);
+		
+		while( (labelLength = d.readUnsignedByte()) != 0 ) {
+			if( (labelLength & 0xc0) == 0xc0) {
+				/* Special casing for a compressed name. */
+				int pointer = d.readUnsignedByte();
+				pointer = pointer | ((labelLength & 0x3F) << 8);
+				offset = d.getPosition();
+				readName(d, results, pointer);
+				d.reset();
+				d.setLength(savedLength);
+				d.skipBytes(offset);
+				break; /* End the loop, a pointer is always the end of the label list */
+			}
+			byte b[] = new byte[labelLength];
+			d.readFully(b);
+			results.addElement(new String(b));
+		}
+	}
+	
+	private String[] readName(PositionDatagram d) throws IOException
+	{
+		Vector v = new Vector();
+		readName(d, v, d.getPosition());
+		String result[] = new String[v.size()];
+		v.copyInto(result);
+		return result;
+	}
+	
+	private String flattenName(String name[])
+	{
+		StringBuffer buf = new StringBuffer();
+		for(int i=0; i<name.length; i++) {
+			if(i!=0) 
+				buf.append(".");
+			buf.append(name[i]);
+		}
+		return buf.toString();
+	}
+	
 	public MdnsDiscoverer(MdnsDiscovererListener listener) throws IOException
 	{
 		this.listener = listener;
-		conn = (DatagramConnection)Connector.open("datagram://:5353");
+		conn = (DatagramConnection)Connector.open("datagram://224.0.0.251:5353");
 		this.nagThread = new MdnsNagThread();
 		this.receiveThread = new MdnsReceiveThread();
 		
