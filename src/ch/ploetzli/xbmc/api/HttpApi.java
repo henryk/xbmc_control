@@ -119,6 +119,16 @@ public class HttpApi {
 		return simpleCommand("GetGUIStatus()", true);
 	}
 	
+	public String[] getBroadcast() throws IOException
+	{
+		return simpleCommand("GetBroadcast()", true);
+	}
+	
+	public void setBroadcast(int setting, int broadcastPort) throws IOException 
+	{
+		simpleCommand("SetBroadcast("+setting+";"+broadcastPort+")");
+	}
+	
 	public byte[] fileDownload(String url) throws IOException
 	{
 		HttpConnection conn = openCommandConnection("FileDownload("+url+";bare)");
@@ -134,5 +144,5 @@ public class HttpApi {
 		}
 		return org.kobjects.base64.Base64.decode(data);
 	}
-	
+
 }

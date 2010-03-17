@@ -7,6 +7,7 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
 import ch.ploetzli.xbmc.Utils;
+import ch.ploetzli.xbmc.api.BroadcastReceiver;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscoverer;
@@ -25,6 +26,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	
 	private int width;
 	private Hashtable devices;
+	private BroadcastReceiver broadcastReceiver;
 	
 	public XbmcPoc() {
 		this.display = Display.getDisplay(this);
@@ -76,6 +78,8 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		if (command == this.exit) {
 			if(this.disc != null)
 				this.disc.shutdown();
+			if(this.broadcastReceiver != null)
+				this.broadcastReceiver.shutdown();
 			this.notifyDestroyed();
 		} else if(command == this.fetch) {
 			new Thread(
@@ -172,10 +176,35 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		String address = (String)data[0];
 		int port = ((Integer)data[1]).intValue();
 		
+		/* Use API and set up broadcast listener before shutting down the multicast
+		 * listener. This should have the effect of Nokia Series 60 not asking for 
+		 * the interface to use again, but doesn't work.
+		 */
+		api = new HttpApi(address, port);
+		try {
+			String broadcast[] = api.getBroadcast();
+			if(broadcast.length > 0 && !(broadcast[0].startsWith("Error"))) {
+				int pos = broadcast[0].indexOf(';');
+				if(pos != -1) {
+					int setting = Integer.parseInt(broadcast[0].substring(0, pos));
+					int broadcastPort = Integer.parseInt(broadcast[0].substring(pos+1));
+					if(setting == 0) {
+						/* Enable at least basic broadcasting */
+						api.setBroadcast(1, broadcastPort);
+					}
+					broadcastReceiver = new BroadcastReceiver(broadcastPort);
+					broadcastReceiver.start();
+				}
+			}
+		} catch(IOException e) {
+			/* Ignore, but don't set up broadcast listener */
+			System.err.println(e);
+			e.printStackTrace();
+		}
+		
 		disc.shutdown();
 		disc = null;
 		
-		api = new HttpApi(address, port);
 		seriesList.setTitle(displayName);
 		display.setCurrent(seriesList);
 	}
