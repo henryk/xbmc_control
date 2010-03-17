@@ -176,10 +176,9 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		String address = (String)data[0];
 		int port = ((Integer)data[1]).intValue();
 		
-		/* Use API and set up broadcast listener before shutting down the multicast
-		 * listener. This should have the effect of Nokia Series 60 not asking for 
-		 * the interface to use again, but doesn't work.
-		 */
+		disc.shutdown();
+		disc = null;
+		
 		api = new HttpApi(address, port);
 		try {
 			String broadcast[] = api.getBroadcast();
@@ -201,9 +200,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 			System.err.println(e);
 			e.printStackTrace();
 		}
-		
-		disc.shutdown();
-		disc = null;
 		
 		seriesList.setTitle(displayName);
 		display.setCurrent(seriesList);
