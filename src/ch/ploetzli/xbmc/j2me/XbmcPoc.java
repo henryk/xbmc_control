@@ -8,9 +8,9 @@ import javax.microedition.midlet.MIDletStateChangeException;
 
 import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
-import ch.ploetzli.xbmc.api.MdnsDiscoverer;
-import ch.ploetzli.xbmc.api.MdnsDiscovererListener;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
+import ch.ploetzli.xbmc.api.mdns.MdnsDiscoverer;
+import ch.ploetzli.xbmc.api.mdns.MdnsDiscovererListener;
 
 public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererListener {
 

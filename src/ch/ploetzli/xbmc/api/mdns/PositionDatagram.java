@@ -1,4 +1,4 @@
-package ch.ploetzli.xbmc.api;
+package ch.ploetzli.xbmc.api.mdns;
 
 import java.io.IOException;
 
