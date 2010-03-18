@@ -10,12 +10,20 @@ import ch.ploetzli.xbmc.Utils;
 
 public class HttpApi {
 	private String baseurl;
+	private String name;
 	
-	public HttpApi(String address, int port)
+	public HttpApi(String displayName, String address, int port)
 	{
 		baseurl = "http://"+address+":"+port+"/xbmcCmds/xbmcHttp";
+		name = displayName;
 	}
 	
+	public String getName()
+	{
+
+		return name;
+	}
+
 	protected HttpConnection openCommandConnection(String cmd) throws IOException
 	{
 		HttpConnection conn = (HttpConnection)Connector.open(baseurl + "?command=" + Utils.URIEscape(cmd));
