@@ -31,7 +31,7 @@ public class BroadcastReceiver extends Thread
 			while(!exit) {
 				conn.receive(d);
 				byte[] data = d.getData();
-				System.out.println("Broadcast received: " + new String(data,0,d.getLength()));
+				System.out.println("Broadcast received from "+ d.getAddress() +": " + new String(data,0,d.getLength()));
 				
 				d.reset();
 				d.setLength(max);
