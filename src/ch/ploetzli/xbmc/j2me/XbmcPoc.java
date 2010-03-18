@@ -27,6 +27,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	private int width;
 	private Hashtable devices;
 	private BroadcastReceiver broadcastReceiver;
+	private LibraryList libraryList;
 	
 	public XbmcPoc() {
 		this.display = Display.getDisplay(this);
@@ -179,7 +180,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		disc.shutdown();
 		disc = null;
 		
-		api = new HttpApi(address, port);
+		api = new HttpApi(displayName, address, port);
 		try {
 			String broadcast[] = api.getBroadcast();
 			if(broadcast.length > 0 && !(broadcast[0].startsWith("Error"))) {
@@ -202,7 +203,11 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		}
 		
 		seriesList.setTitle(displayName);
-		display.setCurrent(seriesList);
+		
+		libraryList = new LibraryList(api);
+		libraryList.addCommand(exit);
+		libraryList.setCommandListener(this);
+		display.setCurrent(libraryList);
 	}
 	
 	public void deviceFound(String name, String address, int port) {
