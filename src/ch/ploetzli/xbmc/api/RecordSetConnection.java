@@ -102,4 +102,10 @@ public class RecordSetConnection implements Enumeration {
 		fields.copyInto(result);
 		return result;
 	}
+	
+	public void shutdown() throws IOException
+	{
+		finished = true;
+		is.close();
+	}
 }
