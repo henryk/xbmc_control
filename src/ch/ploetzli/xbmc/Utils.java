@@ -63,7 +63,7 @@ public class Utils {
 	 * two elements: The first element is the data read up to the matcher, the second is the
 	 * string from toMatch that matched, or "" in case of stream end before complete match   
 	 */
-	public static String[] findRead(InputStream is, String[] toMatch) throws IOException
+	public static String[] findRead(InputStream is, String[] toMatch, boolean isUtf8) throws IOException
 	{
 		String[] result = new String[2];
 		int matchcount = toMatch.length;
@@ -107,7 +107,25 @@ public class Utils {
 			result[0] = nonmatching.toString();
 		}
 		
+		if(isUtf8) {
+			/* This is a horrible hack to solve the encoding problem, but I couldn't find
+			 * a proper way to solve it earlier. In principle one should not treat the
+			 * incoming byte stream as a String up to this point but as a byte sequence
+			 * (and also convert all the entries of the toMatch array to a byte sequence
+			 * before matching) and then only decode into a String at this point. However,
+			 * StringBuffer is the most convenient way to incrementally build a buffer and
+			 * not worry about memory management, so I'm using that. The downside of course
+			 * is that StringBuffer will construct a String and not a byte sequence.
+			 */
+			result[0] = new String(result[0].getBytes("windows-1252"), "UTF-8");
+		}
+		
 		return result;
+	}
+
+	public static String[] findRead(InputStream is, String[] toMatch) throws IOException
+	{
+		return findRead(is, toMatch, false);
 	}
 
 	/* This is a CRC-32 routine that works with the way the xbmc crc32 thumbnail generation

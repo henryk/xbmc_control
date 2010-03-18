@@ -12,13 +12,20 @@ public class RecordSetConnection implements Enumeration {
 	private InputStream is;
 	private boolean finished;
 	private boolean haveRecordStart = false;
+	private boolean isUtf8;
 
-	protected RecordSetConnection(InputStream is)
+	protected RecordSetConnection(InputStream is, boolean isUtf8)
 	{
 		this.is = is;
 		this.finished = false;
+		this.isUtf8 = isUtf8;
 	}
 
+	protected RecordSetConnection(InputStream is)
+	{
+		this(is, false);
+	}
+	
 	public boolean hasMoreElements() {
 		return !finished;
 	}
@@ -36,7 +43,7 @@ public class RecordSetConnection implements Enumeration {
 		
 		while(!done) {
 			try {
-				String r[] = Utils.findRead(is, tokens);
+				String r[] = Utils.findRead(is, tokens, isUtf8);
 				if(r[1] == tokens[0]) { /* <html> */
 					/* Ignore */
 				} else if(r[1] == tokens[1] || r[1] == "") { /* </html> */

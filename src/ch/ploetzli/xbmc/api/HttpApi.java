@@ -91,7 +91,7 @@ public class HttpApi {
 		return simpleCommand(cmd, false);
 	}
 	
-	public RecordSetConnection databaseCommand(String cmd) throws IOException
+	public RecordSetConnection databaseCommand(String cmd, boolean isUtf8) throws IOException
 	{
 		HttpConnection conn = openCommandConnection(cmd);
 		InputStream is = conn.openInputStream();
@@ -99,17 +99,17 @@ public class HttpApi {
 		/* All responses start with <html>, so match that and bail in case of mismatch */
 		Utils.assertRead(is, "<html>");
 		
-		return new RecordSetConnection(is);
+		return new RecordSetConnection(is, isUtf8);
 	}
 	
 	public RecordSetConnection queryVideoDatabase(String query) throws IOException
 	{
-		return databaseCommand("QueryVideoDatabase("+query+")");
+		return databaseCommand("QueryVideoDatabase("+query+")", true);
 	}
 	
 	public RecordSetConnection queryMusicDatabase(String query) throws IOException
 	{
-		return databaseCommand("QueryMusicDatabase("+query+")");
+		return databaseCommand("QueryMusicDatabase("+query+")", true);
 	}
 	
 	public String[] getCurrentPlaylist() throws IOException
