@@ -292,6 +292,7 @@ public class DatabaseView extends SubMenu {
 			query.append(orderClause);
 		}
 		
+		System.err.println(query.toString());
 		return query.toString();
 	}
 
