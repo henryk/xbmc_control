@@ -209,14 +209,14 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 				new SubMenu("Remote"),
 				new SubMenu("Library", new SubMenu[]{
 						new SubMenu("Movies", new SubMenu[]{
-								new MovieGenreView("Genre"),
-								new MovieTitleView("Title"),
-								new MovieYearView("Year"),
+								MovieGenreView.get("Genre"),
+								MovieTitleView.get("Title"),
+								MovieYearView.get("Year"),
 						}),
 						new SubMenu("TV Shows", new SubMenu[]{
-								new TvshowGenreView("Genre"),
+								TvshowGenreView.get("Genre"),
 								TvshowTitleView.get("Title"),
-								new TvshowYearView("Year"),
+								TvshowYearView.get("Year"),
 						}),
 				}),
 		});

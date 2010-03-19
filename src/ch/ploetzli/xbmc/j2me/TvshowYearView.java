@@ -1,8 +1,8 @@
 package ch.ploetzli.xbmc.j2me;
 
 public class TvshowYearView extends DatabaseView {
-	public TvshowYearView(String name) {
-		super(name, null, new String[]{"substr(c05,0,5) as year"}, "tvshowview", "year", "year");
+	public static DatabaseView get(String name) {
+		return get(TvshowYearView.class, name, null, new String[]{"substr(c05,0,5) as year"}, "tvshowview", "year", "year");
 	}
 	
 	protected void select(int index) {
