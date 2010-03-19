@@ -32,7 +32,7 @@ public class DatabaseView extends SubMenu {
 	public DatabaseView() { super("No name", new SubMenu[]{}); }
 	
 	/** This is the effective constructor, active when an instance is requested through get */
-	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
+	protected static DatabaseView get(Class c, String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
 	{
 		/* TODO: Implement caching logic here */
 		DatabaseView v = null;
@@ -41,7 +41,7 @@ public class DatabaseView extends SubMenu {
 		} catch(Exception e) {
 			/* Might as well crash and burn if anything goes wrong here. */
 		}
-		v.setArguments(name, keyRow, dataRows, table, orderClause, groupClause, whereClause);
+		v.setArguments(name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
 		return v;
 	}
 
@@ -56,35 +56,35 @@ public class DatabaseView extends SubMenu {
 		this.whereClause = whereClause;
 	}
 	
-	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
+	protected static DatabaseView get(Class c, String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause)
 	{
-		return get(c, name, keyRow, dataRows, table, orderClause, groupClause, null);
+		return get(c, name, keyColumn, dataColumns, table, orderClause, groupClause, null);
 	}
 
-	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause)
+	protected static DatabaseView get(Class c, String name, String keyColumn, String[] dataColumns, String table, String orderClause)
 	{
-		return get(c, name, keyRow, dataRows, table, orderClause, null, null);
+		return get(c, name, keyColumn, dataColumns, table, orderClause, null, null);
 	}
 
-	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table)
+	protected static DatabaseView get(Class c, String name, String keyColumn, String[] dataColumns, String table)
 	{
-		return get(c, name, keyRow, dataRows, table, null, null, null);
+		return get(c, name, keyColumn, dataColumns, table, null, null, null);
 	}
 
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)	{
-		return get(DatabaseView.class, name, keyRow, dataRows, table, orderClause, groupClause, whereClause);
+	public static DatabaseView get(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)	{
+		return get(DatabaseView.class, name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
 	}
 	
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)	{
-		return get(DatabaseView.class, name, keyRow, dataRows, table, orderClause, groupClause, null);
+	public static DatabaseView get(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause)	{
+		return get(DatabaseView.class, name, keyColumn, dataColumns, table, orderClause, groupClause, null);
 	}
 
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause)	{
-		return get(DatabaseView.class, name, keyRow, dataRows, table, orderClause, null, null);
+	public static DatabaseView get(String name, String keyColumn, String[] dataColumns, String table, String orderClause)	{
+		return get(DatabaseView.class, name, keyColumn, dataColumns, table, orderClause, null, null);
 	}
 
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table)	{
-		return get(DatabaseView.class, name, keyRow, dataRows, table, null, null, null);
+	public static DatabaseView get(String name, String keyColumn, String[] dataColumns, String table)	{
+		return get(DatabaseView.class, name, keyColumn, dataColumns, table, null, null, null);
 	}
 
 	/**
