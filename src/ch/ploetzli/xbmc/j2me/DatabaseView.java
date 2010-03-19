@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.List;
 import javax.microedition.lcdui.Ticker;
 
@@ -405,12 +406,13 @@ public class DatabaseView extends SubMenu {
 	}
 
 	/**
-	 * Update GUI with new database row. The default implementation simply uses
-	 * 	the first non-key column as a label, but subclasses might want to override
+	 * Common code from appendRow and updateRow to be overriden in subclasses.
+	 * The default implementation simply uses the first non-key column as a label.
 	 * @param index
 	 * @param data
+	 * @return
 	 */
-	protected void appendRow(int index, String[] data)
+	protected Object[] formatRow(int index, String[] data)
 	{
 		String label = "No label";
 		if(data.length > 0) {
@@ -419,7 +421,19 @@ public class DatabaseView extends SubMenu {
 				label = data[1];
 			}
 		}
-		((List)getDisplayable()).append(label, null);
+		return new Object[]{label, null};
+	}
+	
+	/**
+	 * Update GUI with new database row. The default implementation simply uses
+	 * 	the first non-key column as a label, but subclasses might want to override
+	 * @param index
+	 * @param data
+	 */
+	protected void appendRow(int index, String[] data)
+	{
+		Object[] o = formatRow(index, data);
+		((List)getDisplayable()).append((String)o[0], (Image)o[1]);
 	}
 
 	/**
@@ -430,14 +444,8 @@ public class DatabaseView extends SubMenu {
 	 */
 	protected void updateRow(int index, String[] data)
 	{
-		String label = "No label";
-		if(data.length > 0) {
-			label = data[0];
-			if(keyColumn != null && data.length > 1) {
-				label = data[1];
-			}
-		}
-		((List)getDisplayable()).set(index, label, null);
+		Object[] o = formatRow(index, data);
+		((List)getDisplayable()).set(index, (String)o[0], (Image)o[1]);
 	}
 
 	/**
