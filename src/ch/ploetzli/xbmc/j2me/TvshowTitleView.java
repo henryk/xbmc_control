@@ -21,11 +21,6 @@ public class TvshowTitleView extends DatabaseView {
 	}
 
 	protected static DatabaseView get(String name, String whereClause) {
-		try {
-			return get(Class.forName("ch.ploetzli.xbmc.j2me.TvshowTitleView"), name, keyColumn, dataColumns, table, orderClause, null, whereClause);
-		} catch (ClassNotFoundException e) {
-			/* Might as well crash and burn */
-		}
-		return null;
+		return get(TvshowTitleView.class, name, keyColumn, dataColumns, table, orderClause, null, whereClause);
 	}
 }
