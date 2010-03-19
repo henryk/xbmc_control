@@ -28,8 +28,9 @@ public class TvshowTitleView extends DatabaseView {
 				int watched = Integer.parseInt(data[3]);
 				InputStream is = null;
 				if(watched == 0) {
-					/* No icon */
-				} else if(total < watched) {
+					/* Not watched */
+					is = this.getClass().getResourceAsStream("ball_none.png");
+				} else if(watched < total) {
 					/* Glass is half full */
 					is = this.getClass().getResourceAsStream("ball_half.png");
 				} else  {

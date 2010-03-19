@@ -14,7 +14,7 @@
    id="svg2383"
    sodipodi:version="0.32"
    inkscape:version="0.46"
-   sodipodi:docname="ball_half.svg"
+   sodipodi:docname="ball_none.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    inkscape:export-filename="/home/henryk/uni/workspace/xbmc_control/graphics/ball_half.png"
    inkscape:export-xdpi="90"
@@ -29,11 +29,11 @@
          id="stop3241" />
       <stop
          id="stop3247"
-         offset="0.5"
+         offset="0"
          style="stop-color:#00ff00;stop-opacity:1;" />
       <stop
          style="stop-color:#00ff00;stop-opacity:0.24705882;"
-         offset="0.55033559"
+         offset="0.1"
          id="stop3249" />
       <stop
          style="stop-color:#00ff00;stop-opacity:0.24705882;"
@@ -118,7 +118,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="44.395604"
-     inkscape:cx="7.2003713"
+     inkscape:cx="5.6236386"
      inkscape:cy="7.819802"
      inkscape:current-layer="layer1"
      showgrid="true"
