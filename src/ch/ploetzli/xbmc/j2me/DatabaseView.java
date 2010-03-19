@@ -26,43 +26,13 @@ public class DatabaseView extends SubMenu {
 	
 	/**
 	 * Default constructor, necessary for construction through Class.newInstance();
+	 * Never use directly, instead use get(...) which is the effective constructor
+	 * for this class and its subclasses.
 	 */
 	public DatabaseView() { super("No name", new SubMenu[]{}); }
 	
-	public DatabaseView(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
-	{
-		this();
-		this.setArguments(name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
-	}
-	
-	/** This is the effective constructor, also active when an instance is requested through get */
-	protected void setArguments(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
-	{
-		this.setName(name);
-		this.keyColumn = keyColumn;
-		this.dataColumns = dataColumns;
-		this.table = table;
-		this.orderClause = orderClause;
-		this.groupClause = groupClause;
-		this.whereClause = whereClause;
-	}
-
-	public DatabaseView(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
-	{
-		this(name, keyRow, dataRows, table, orderClause, groupClause, null);
-	}
-	
-	public DatabaseView(String name, String keyRow, String[] dataRows, String table, String orderClause)
-	{
-		this(name, keyRow, dataRows, table, orderClause, null, null);
-	}
-
-	public DatabaseView(String name, String keyRow, String[] dataRows, String table)
-	{
-		this(name, keyRow, dataRows, table, null, null, null);
-	}
-	
-	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
+	/** This is the effective constructor, active when an instance is requested through get */
+	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
 	{
 		/* TODO: Implement caching logic here */
 		DatabaseView v = null;
@@ -75,21 +45,48 @@ public class DatabaseView extends SubMenu {
 		return v;
 	}
 
-	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
+	protected void setArguments(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
 	{
-		return DatabaseView.get(c, name, keyRow, dataRows, table, orderClause, groupClause, null);
-	}
-
-	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause)
-	{
-		return DatabaseView.get(c, name, keyRow, dataRows, table, orderClause, null, null);
-	}
-
-	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table)
-	{
-		return DatabaseView.get(c, name, keyRow, dataRows, table, null, null, null);
+		this.setName(name);
+		this.keyColumn = keyColumn;
+		this.dataColumns = dataColumns;
+		this.table = table;
+		this.orderClause = orderClause;
+		this.groupClause = groupClause;
+		this.whereClause = whereClause;
 	}
 	
+	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
+	{
+		return get(c, name, keyRow, dataRows, table, orderClause, groupClause, null);
+	}
+
+	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause)
+	{
+		return get(c, name, keyRow, dataRows, table, orderClause, null, null);
+	}
+
+	protected static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table)
+	{
+		return get(c, name, keyRow, dataRows, table, null, null, null);
+	}
+
+	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)	{
+		return get(DatabaseView.class, name, keyRow, dataRows, table, orderClause, groupClause, whereClause);
+	}
+	
+	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)	{
+		return get(DatabaseView.class, name, keyRow, dataRows, table, orderClause, groupClause, null);
+	}
+
+	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause)	{
+		return get(DatabaseView.class, name, keyRow, dataRows, table, orderClause, null, null);
+	}
+
+	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table)	{
+		return get(DatabaseView.class, name, keyRow, dataRows, table, null, null, null);
+	}
+
 	/**
 	 * Return our grandfathers' HttpApi.
 	 * Follows the parent chain to find an instance of DatabaseTopMenu and calls
