@@ -1,6 +1,7 @@
 package ch.ploetzli.xbmc.j2me;
 
 import java.io.IOException;
+import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.microedition.lcdui.Displayable;
@@ -25,6 +26,26 @@ public class DatabaseView extends SubMenu {
 	protected FillingThread fillingThread = null;
 	
 	/**
+	 * Cache of constructed objects to be used by get
+	 */
+	protected static Hashtable objectCache = new Hashtable();
+	/**
+	 * LRU list of keys from the objectCache member, to ensure
+	 * the limit of objectCacheMax objects in the cache.
+	 * The vector contains the keys into objectCache in ascending order
+	 * of least-recent-usedness, e.g. the last element will be the most
+	 * recently returned and the first object will be the least recently
+	 * returned and next candidate for dropping.
+	 */
+	protected static Vector objectCacheKeys = new Vector();
+	/**
+	 * Keep at most this many objects cached in objectCache.
+	 * When residency reaches this number the oldest object, as determined
+	 * by objectCacheKeys gets removed before a new one is inserted.
+	 */
+	protected final static int objectCacheMax = 35;
+	
+	/**
 	 * Default constructor, necessary for construction through Class.newInstance();
 	 * Never use directly, instead use get(...) which is the effective constructor
 	 * for this class and its subclasses.
@@ -34,15 +55,37 @@ public class DatabaseView extends SubMenu {
 	/** This is the effective constructor, active when an instance is requested through get */
 	protected static DatabaseView get(Class c, String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
 	{
-		/* TODO: Implement caching logic here */
+		String cacheKey = (c.getName()+";"+name+";"+constructQuery(keyColumn, dataColumns, table, orderClause, groupClause, whereClause)).intern();
 		DatabaseView v = null;
-		try {
-			v = (DatabaseView)c.newInstance();
-		} catch(Exception e) {
-			/* Might as well crash and burn if anything goes wrong here. */
-		}
-		v.setArguments(name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
+		
+		synchronized(objectCache) {
+			if(objectCache.containsKey(cacheKey)) {
+				/* Object already in cache, update LRU list, return cached object */
+				objectCacheKeys.removeElement(cacheKey);
+				objectCacheKeys.addElement(cacheKey);
+				v = (DatabaseView)objectCache.get(cacheKey);
+			} else {
+				/* Must construct new object */
+				try {
+					v = (DatabaseView)c.newInstance();
+				} catch(Exception e) {
+					/* Might as well crash and burn if anything goes wrong here. */
+				}
+				v.setArguments(name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
+				
+				while(objectCacheKeys.size() >= objectCacheMax) {
+					/* Drop oldest element from cache */
+					String oldCacheKey = (String)objectCacheKeys.elementAt(0);
+					objectCacheKeys.removeElementAt(0);
+					objectCache.remove(oldCacheKey);
+				}
+				
+				/* Add element to cache */
+				objectCacheKeys.addElement(cacheKey);
+				objectCache.put(cacheKey, v);
+			}
 		return v;
+		}
 	}
 
 	protected void setArguments(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
@@ -258,6 +301,13 @@ public class DatabaseView extends SubMenu {
 
 
 	protected String constructQuery() {
+		String result = constructQuery(this.keyColumn, this.dataColumns, this.table, this.orderClause, this.groupClause, this.whereClause);
+		System.err.println(result);
+		return result;
+	}
+	
+	protected static String constructQuery(String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
+	{
 		StringBuffer query = new StringBuffer();
 		
 		query.append("SELECT ");
@@ -292,7 +342,6 @@ public class DatabaseView extends SubMenu {
 			query.append(orderClause);
 		}
 		
-		System.err.println(query.toString());
 		return query.toString();
 	}
 
