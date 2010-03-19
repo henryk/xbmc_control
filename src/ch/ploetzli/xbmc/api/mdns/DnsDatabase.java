@@ -3,6 +3,8 @@ package ch.ploetzli.xbmc.api.mdns;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import ch.ploetzli.xbmc.Utils;
+
 /* 
  * This is a minimal DNS response database that will hold multiple responses
  * per key. The format of the entries is Object[]{int type; String[] key; Vector contents}
@@ -32,7 +34,7 @@ public class DnsDatabase {
 			if(type != otherType.intValue())
 				continue;
 			String[] otherName = (String[])entry[1];
-			if(!DnsRecord.namesEqual(name, otherName))
+			if(!Utils.stringArraysEqual(name, otherName))
 				continue;
 			contents = (Vector)entry[2];
 			break;
@@ -92,7 +94,7 @@ public class DnsDatabase {
 			if(type != otherType.intValue())
 				continue;
 			String[] otherName = (String[])entry[1];
-			if(!DnsRecord.namesEqual(key, otherName))
+			if(!Utils.stringArraysEqual(key, otherName))
 				continue;
 			Vector contents = (Vector)entry[2];
 			

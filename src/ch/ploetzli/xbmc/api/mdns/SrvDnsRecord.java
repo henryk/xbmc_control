@@ -1,5 +1,7 @@
 package ch.ploetzli.xbmc.api.mdns;
 
+import ch.ploetzli.xbmc.Utils;
+
 public class SrvDnsRecord extends DnsRecord {
 
 	public int priority;
@@ -30,7 +32,7 @@ public class SrvDnsRecord extends DnsRecord {
 		if(this.weight != that.weight) return false;
 		if(this.port != that.port) return false;
 		
-		return DnsRecord.namesEqual(this.target, that.target);
+		return Utils.stringArraysEqual(this.target, that.target);
 	}
 
 }

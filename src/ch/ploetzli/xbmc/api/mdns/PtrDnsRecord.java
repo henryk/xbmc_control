@@ -1,5 +1,7 @@
 package ch.ploetzli.xbmc.api.mdns;
 
+import ch.ploetzli.xbmc.Utils;
+
 public class PtrDnsRecord extends DnsRecord {
 
 	public String[] data;
@@ -17,7 +19,7 @@ public class PtrDnsRecord extends DnsRecord {
 	{
 		if(!(obj instanceof PtrDnsRecord))
 			return false;
-		return DnsRecord.namesEqual( ((PtrDnsRecord)obj).data, data);
+		return Utils.stringArraysEqual( ((PtrDnsRecord)obj).data, data);
 	}
 
 }
