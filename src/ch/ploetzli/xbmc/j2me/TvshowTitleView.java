@@ -37,7 +37,6 @@ public class TvshowTitleView extends DatabaseView {
 					/* Fully watched */
 					is = this.getClass().getResourceAsStream("ball.png");
 				}
-				System.out.println(is);
 				if(is != null) {
 					img = Image.createImage(is);
 				}
