@@ -337,6 +337,24 @@ public class DatabaseView extends SubMenu {
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see ch.ploetzli.xbmc.j2me.SubMenu#select(int)
+	 */
+	protected void select(int index) {
+		if(index >= 0 && index < cache.size()) {
+			String[] row = (String[])cache.elementAt(index);
+			select(row);
+		}
+	}
+	
+	/**
+	 * Needs to be overriden in a subclass.
+	 * @param row
+	 */
+	protected void select(String row[]) {
+		
+	}
+
 	/**
 	 * Update GUI with new database row. The default implementation simply uses
 	 * 	the first non-key column as a label, but subclasses might want to override
