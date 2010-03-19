@@ -1,4 +1,6 @@
-#Tue Mar 16 06:50:45 CET 2010
+#Fri Mar 19 15:08:31 CET 2010
 eclipse.preferences.version=1
+obfuscate_use_project=true
 preverify_config_value=CLDC
 preverify_type=default_preverifier
+proguard_keep=public class * extends javax.microedition.midlet.MIDlet|public class * extends ch.ploetzli.xbmc.j2me.DatabaseView

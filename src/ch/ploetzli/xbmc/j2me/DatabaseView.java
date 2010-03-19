@@ -24,9 +24,21 @@ public class DatabaseView extends SubMenu {
 	protected Vector cache = new Vector();
 	protected FillingThread fillingThread = null;
 	
+	/**
+	 * Default constructor, necessary for construction through Class.newInstance();
+	 */
+	public DatabaseView() { super("No name", new SubMenu[]{}); }
+	
 	public DatabaseView(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
 	{
-		super(name, new SubMenu[]{});
+		this();
+		this.setArguments(name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
+	}
+	
+	/** This is the effective constructor, also active when an instance is requested through get */
+	protected void setArguments(String name, String keyColumn, String[] dataColumns, String table, String orderClause, String groupClause, String whereClause)
+	{
+		this.setName(name);
 		this.keyColumn = keyColumn;
 		this.dataColumns = dataColumns;
 		this.table = table;
@@ -50,35 +62,34 @@ public class DatabaseView extends SubMenu {
 		this(name, keyRow, dataRows, table, null, null, null);
 	}
 	
-	/* Factory methods to return cached objects */
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
+	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
 	{
 		/* TODO: Implement caching logic here */
-		return make(name, keyRow, dataRows, table, orderClause, groupClause, whereClause);
+		DatabaseView v = null;
+		try {
+			v = (DatabaseView)c.newInstance();
+		} catch(Exception e) {
+			/* Might as well crash and burn if anything goes wrong here. */
+		}
+		v.setArguments(name, keyRow, dataRows, table, orderClause, groupClause, whereClause);
+		return v;
 	}
 
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
+	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
 	{
-		return DatabaseView.get(name, keyRow, dataRows, table, orderClause, groupClause, null);
+		return DatabaseView.get(c, name, keyRow, dataRows, table, orderClause, groupClause, null);
 	}
 
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause)
+	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table, String orderClause)
 	{
-		return DatabaseView.get(name, keyRow, dataRows, table, orderClause, null, null);
+		return DatabaseView.get(c, name, keyRow, dataRows, table, orderClause, null, null);
 	}
 
-	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table)
+	public static DatabaseView get(Class c, String name, String keyRow, String[] dataRows, String table)
 	{
-		return DatabaseView.get(name, keyRow, dataRows, table, null, null, null);
+		return DatabaseView.get(c, name, keyRow, dataRows, table, null, null, null);
 	}
 	
-	/** Factory method to return newly made object. <b>Must</b> be overriden by all subclasses */
-	protected static DatabaseView make(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
-	{
-		System.out.println("Making DatabaseView");
-		return new DatabaseView(name, keyRow, dataRows, table, orderClause, groupClause, whereClause);
-	}
-
 	/**
 	 * Return our grandfathers' HttpApi.
 	 * Follows the parent chain to find an instance of DatabaseTopMenu and calls

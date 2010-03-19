@@ -5,7 +5,6 @@ public class TvshowYearView extends DatabaseView {
 		super(name, null, new String[]{"substr(c05,0,5) as year"}, "tvshowview", "year", "year");
 	}
 	
-	
 	protected void select(int index) {
 		if(index >= 0 && index < cache.size()) {
 			String[] row = (String[])cache.elementAt(index);
@@ -16,4 +15,5 @@ public class TvshowYearView extends DatabaseView {
 			}
 		}
 	}
+
 }
