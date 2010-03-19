@@ -27,7 +27,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	private int width;
 	private Hashtable devices;
 	private BroadcastReceiver broadcastReceiver;
-	private LibraryList libraryList;
 	
 	public XbmcPoc() {
 		this.display = Display.getDisplay(this);
@@ -171,6 +170,19 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		}
 	}
 	
+	private DatabaseTopMenu library = new DatabaseTopMenu("Library", new SubMenu[]{
+			new SubMenu("Movies", new SubMenu[]{
+					new DatabaseView("Genre", "genre.idGenre", new String[]{"strGenre"}, "genre join genrelinkmovie on genre.idGenre=genrelinkmovie.idGenre", "strGenre"),
+					new DatabaseView("Title", "idMovie", new String[]{"c00"}, "movieview", "c00"),
+					new DatabaseView("Year", null, new String[]{"c07 as year"}, "movieview", "year", "year"),
+			}),
+			new SubMenu("TV Shows", new SubMenu[]{
+					new DatabaseView("Genre", "genre.idGenre", new String[]{"strGenre"}, "genre join genrelinktvshow on genre.idGenre=genrelinktvshow.idGenre", "strGenre"),
+					new DatabaseView("Title", "idShow", new String[]{"c00"}, "tvshowview", "c00"),
+					new DatabaseView("Year", null, new String[]{"substr(c05,0,5) as year"}, "tvshowview", "year", "year"),
+			}),
+	});
+	
 	public void doConnect(String displayName)
 	{
 		Object[] data = (Object[])this.devices.get(displayName);
@@ -204,10 +216,12 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		
 		seriesList.setTitle(displayName);
 		
-		libraryList = new LibraryList(api);
-		libraryList.addCommand(exit);
-		libraryList.setCommandListener(this);
-		display.setCurrent(libraryList);
+		library.setApi(api);
+		library.addCommand(exit);
+		library.setCommandListener(this);
+		library.setDisplay(display);
+		
+		display.setCurrent(library.getDisplayable());
 	}
 	
 	public void deviceFound(String name, String address, int port) {
