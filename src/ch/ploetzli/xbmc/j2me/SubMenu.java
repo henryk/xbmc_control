@@ -25,8 +25,10 @@ public class SubMenu implements CommandListener {
 	{
 		this(name);
 		this.subMenus = subMenus;
-		for(int i = 0; i<subMenus.length; i++) 
-			subMenus[i].setParent(this);
+		if(subMenus != null) {
+			for(int i = 0; i<subMenus.length; i++) 
+				subMenus[i].setParent(this);
+		}
 	}
 	
 	public void setParent(SubMenu parent) {

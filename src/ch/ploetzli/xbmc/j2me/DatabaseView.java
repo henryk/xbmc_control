@@ -14,8 +14,7 @@ public class DatabaseView extends SubMenu {
 	
 	public DatabaseView(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause, String whereClause)
 	{
-		super(name, new SubMenu[]{});
-		this.name = name;
+		super(name);
 		this.keyRow = keyRow;
 		this.dataRows = dataRows;
 		this.table = table;
