@@ -138,15 +138,27 @@ public class SubMenu implements CommandListener {
 		} else if(cmd == List.SELECT_COMMAND) {
 			if(displayable != null && displayable instanceof List) {
 				int i = ((List)displayable).getSelectedIndex();
-				if(subMenus != null) {
-					if(i >= 0 && i < subMenus.length)
-						show(subMenus[i]);
-				} else {
-					System.err.println("No submenus");
-				}
+				select(i);
 			}
 		} else if(listener != null) {
 			listener.commandAction(cmd, d);
+		}
+	}
+
+	/**
+	 * Called when an item in this menu is selected and our 
+	 * 	displayable is a list. The default implementation will
+	 * 	show the selected sub menu i available, but subclasses
+	 * 	might want to override that to do something else.
+	 * @param index The value of getSelectedIndex() as returned
+	 * 	by our displayable as a List
+	 */
+	protected void select(int index) {
+		if(subMenus != null) {
+			if(index >= 0 && index < subMenus.length)
+				show(subMenus[index]);
+		} else {
+			System.err.println("No submenus");
 		}
 	}
 	
