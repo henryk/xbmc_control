@@ -39,6 +39,10 @@ public class SubMenu implements CommandListener {
 		return parent;
 	}
 	
+	public void setName(String name) {
+		this.name = name;
+	}
+	
 	/**
 	 * Set the Display this menu should be displayed on for
 	 * purposes of the show method.
