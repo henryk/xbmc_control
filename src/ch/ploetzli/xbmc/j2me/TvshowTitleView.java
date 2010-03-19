@@ -1,26 +1,16 @@
 package ch.ploetzli.xbmc.j2me;
 
 public class TvshowTitleView extends DatabaseView {
-	private static final String orderClause = "c00";
-	private static final String table = "tvshowview";
-	private static final String[] dataColumns = new String[]{orderClause};
-	private static final String keyColumn = "idShow";
-	
 	/**
 	 * Default constructor, necessary for construction through Class.getInstance
 	 */
 	public TvshowTitleView() { super(); }
 
-	public TvshowTitleView(String name) {
-		super(name, keyColumn, dataColumns, table, orderClause);
+	protected static DatabaseView get(String name) {
+		return get(name, null);
 	}
-
-	public TvshowTitleView(String name, String whereClause) {
-		this(name);
-		this.whereClause = whereClause;
-	}
-
+	
 	protected static DatabaseView get(String name, String whereClause) {
-		return get(TvshowTitleView.class, name, keyColumn, dataColumns, table, orderClause, null, whereClause);
+		return get(TvshowTitleView.class, name, "idShow", new String[]{"c00"}, "tvshowview", "c00", null, whereClause);
 	}
 }
