@@ -170,21 +170,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		}
 	}
 	
-	private DatabaseTopMenu topMenu = new DatabaseTopMenu("", new SubMenu[]{
-			new SubMenu("Remote"),
-			new SubMenu("Library", new SubMenu[]{
-					new SubMenu("Movies", new SubMenu[]{
-							new MovieGenreView(),
-							new MovieTitleView(),
-							new MovieYearView(),
-					}),
-					new SubMenu("TV Shows", new SubMenu[]{
-							new TvshowGenreView(),
-							new TvshowTitleView(),
-							new TvshowYearView(),
-					}),
-			}),
-	});
+	private DatabaseTopMenu topMenu;
 	
 	public void doConnect(String displayName)
 	{
@@ -219,8 +205,23 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		
 		seriesList.setTitle(displayName);
 		
+		topMenu = new DatabaseTopMenu(displayName, new SubMenu[]{
+				new SubMenu("Remote"),
+				new SubMenu("Library", new SubMenu[]{
+						new SubMenu("Movies", new SubMenu[]{
+								new MovieGenreView(),
+								new MovieTitleView(),
+								new MovieYearView(),
+						}),
+						new SubMenu("TV Shows", new SubMenu[]{
+								new TvshowGenreView(),
+								new TvshowTitleView(),
+								new TvshowYearView(),
+						}),
+				}),
+		});
+		
 		topMenu.setApi(api);
-		topMenu.setName(displayName);
 		topMenu.addCommand(exit);
 		topMenu.setCommandListener(this);
 		topMenu.setDisplay(display);
