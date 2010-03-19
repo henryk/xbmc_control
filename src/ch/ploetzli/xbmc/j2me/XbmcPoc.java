@@ -172,12 +172,12 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	
 	private DatabaseTopMenu library = new DatabaseTopMenu("Library", new SubMenu[]{
 			new SubMenu("Movies", new SubMenu[]{
-					new DatabaseView("Genre", "genre.idGenre", new String[]{"strGenre"}, "genre join genrelinkmovie on genre.idGenre=genrelinkmovie.idGenre", "strGenre"),
+					new DatabaseView("Genre", "genre.idGenre", new String[]{"strGenre"}, "genre join genrelinkmovie on genre.idGenre=genrelinkmovie.idGenre", "strGenre", "strGenre"),
 					new DatabaseView("Title", "idMovie", new String[]{"c00"}, "movieview", "c00"),
 					new DatabaseView("Year", null, new String[]{"c07 as year"}, "movieview", "year", "year"),
 			}),
 			new SubMenu("TV Shows", new SubMenu[]{
-					new DatabaseView("Genre", "genre.idGenre", new String[]{"strGenre"}, "genre join genrelinktvshow on genre.idGenre=genrelinktvshow.idGenre", "strGenre"),
+					new DatabaseView("Genre", "genre.idGenre", new String[]{"strGenre"}, "genre join genrelinktvshow on genre.idGenre=genrelinktvshow.idGenre", "strGenre", "strGenre"),
 					new DatabaseView("Title", "idShow", new String[]{"c00"}, "tvshowview", "c00"),
 					new DatabaseView("Year", null, new String[]{"substr(c05,0,5) as year"}, "tvshowview", "year", "year"),
 			}),
