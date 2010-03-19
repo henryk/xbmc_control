@@ -58,17 +58,17 @@ public class DatabaseView extends SubMenu {
 
 	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause, String groupClause)
 	{
-		return new DatabaseView(name, keyRow, dataRows, table, orderClause, groupClause);
+		return DatabaseView.get(name, keyRow, dataRows, table, orderClause, groupClause, null);
 	}
 
 	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table, String orderClause)
 	{
-		return DatabaseView.get(name, keyRow, dataRows, table, orderClause);
+		return DatabaseView.get(name, keyRow, dataRows, table, orderClause, null, null);
 	}
 
 	public static DatabaseView get(String name, String keyRow, String[] dataRows, String table)
 	{
-		return DatabaseView.get(name, keyRow, dataRows, table);
+		return DatabaseView.get(name, keyRow, dataRows, table, null, null, null);
 	}
 	
 	/**
