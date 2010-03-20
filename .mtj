@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mtjMetadata jad="xbmc_control.jad" version="1.1.0.v200908251016">
    <device group="Sun Java(TM) Wireless Toolkit 2.5.2 for CLDC" name="QwertyDevice"/>
-   <signing projectSpecific="false" signProject="false">
-      <alias/>
+   <signing projectSpecific="false" signProject="true">
+      <alias>henryk-signkey</alias>
    </signing>
    <configurations>
       <configuration active="true" name="QwertyDevice">
