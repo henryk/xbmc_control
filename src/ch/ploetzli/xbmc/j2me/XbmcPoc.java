@@ -206,7 +206,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		seriesList.setTitle(displayName);
 		
 		topMenu = new DatabaseTopMenu(displayName, new SubMenu[]{
-				new SubMenu("Remote"),
+				new RemoteControl("Remote"),
 				new SubMenu("Library", new SubMenu[]{
 						new SubMenu("Movies", new SubMenu[]{
 								MovieGenreView.get("Genre"),

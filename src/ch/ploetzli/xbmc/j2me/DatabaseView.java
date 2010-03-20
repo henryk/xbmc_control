@@ -154,9 +154,7 @@ public class DatabaseView extends SubMenu {
 	}
 
 	/**
-	 * Return our grandfathers' HttpApi.
-	 * Follows the parent chain to find an instance of DatabaseTopMenu and calls
-	 * getApi() on it.
+	 * Follows the parent chain to find an instance of DatabaseTopMenu and returns it.
 	 * @return
 	 */
 	protected DatabaseTopMenu getDatabaseTopMenu()
