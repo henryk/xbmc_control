@@ -13,6 +13,28 @@ import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
 
+/**
+ * This class is a menu that represents some database derived view, e.g.
+ * a list of submenus that represent database items. The default implementation
+ * can execute a background query to the database and populate a List with
+ * the results. No action on what should happen if one of the list items is
+ * selected is defined though, so this class is generally subclassed with a
+ * specific class that will know what to do when e.g. a year is selected.
+ * 
+ * This class cooperates and needs an instance of DatabaseTopMenu in the parent
+ * chain in order to find a reference to the database, represented by an HttpApi
+ * object. As such this class and the DatabaseTopMenu class are XBMC HTTP-API 
+ * specific, while SubMenu is generic and reusable.
+ * 
+ * No constructor is defined for this class and instances should be retrieved
+ * with one of the get methods, which will access a singleton cache in order
+ * to reuse objects which are constructed with the same arguments. This will
+ * a) cache the database results in memory, and b) enable consistent user
+ * experience by keeping the selection in each menu persistent over deselection
+ * and reselection of a menu.
+ * @author henryk
+ *
+ */
 public class DatabaseView extends SubMenu {
 	protected static Ticker ticker = new Ticker("Loading ...");
 	
@@ -137,14 +159,13 @@ public class DatabaseView extends SubMenu {
 	 * getApi() on it.
 	 * @return
 	 */
-	protected HttpApi getApi()
+	protected DatabaseTopMenu getDatabaseTopMenu()
 	{
 		SubMenu parent = this;
 		while( (parent = parent.getParent()) != null) {
 			if(parent instanceof DatabaseTopMenu) {
-				HttpApi api = ((DatabaseTopMenu)parent).getApi();
-				if(api != null)
-					return api;
+				DatabaseTopMenu topMenu = ((DatabaseTopMenu)parent);
+				return topMenu;
 			}
 		}
 		return null;
@@ -181,52 +202,30 @@ public class DatabaseView extends SubMenu {
 	}
 
 	/**
-	 * Check if this DatabaseView's cache is still valid.
+	 * Return our DatabaseView's cache validator.
 	 * The cache is protected by a validator that is sum() and count() over the
-	 * key column. This should be guaranteed to catch any deletion and insertion
-	 * of rows, since keys are strictly monotonic.
-	 * @param api An HttpApi object
-	 * @param storeNewValidator If true then the current validator will be stored
-	 * 	so that later calls to this function will return true unless further
-	 * 	modifications take place.
-	 * @return false if no key column is set; otherwise queries the database and
-	 * 	returns false if the cache validator does not match the stored value
+	 * key column as well as a string representation of the database epoch. This
+	 * should be guaranteed to catch any deletion and insertion of rows, since
+	 * keys are strictly monotonic. Through the epoch it will also catch user
+	 * initiated cache invalidation.
+	 * @param topMenu A DatabaseTopMenu instance
+	 * @return false Array of String to be matched against the cacheValidator
+	 * 	instance variable.
 	 */
-	public boolean cacheValid(HttpApi api, boolean storeNewValidator) throws IOException
-	{
-		if(keyColumn == null)
-			return false;
-		if(!storeNewValidator && cacheValidator == null) {
-			/* No cache yet */
-			return false;
-		}
-		
-		String newValidator[] = fetchCacheValidator(api);
-		
-		if(newValidator == null || cacheValidator == null) {
-			if(storeNewValidator)
-				cacheValidator = newValidator;
-			return false;
-		} else if(!Utils.stringArraysEqual(newValidator,cacheValidator)) {
-			if(storeNewValidator)
-				cacheValidator = newValidator;
-			return false;
-		} else {
-			return true;
-		}
-	}
-	
-	public String[] fetchCacheValidator(HttpApi api) throws IOException
+	public String[] fetchCacheValidator(DatabaseTopMenu topMenu) throws IOException
 	{
 		RecordSetConnection conn = null;
 		String newValidator[] = null;
 		try {
-			/* TODO Maybe include where clause? */
-			conn = api.queryVideoDatabase("select count("+keyColumn+"), sum("+keyColumn+") from "+table);
-			if(conn.hasMoreElements()) {
-				Object o = conn.nextElement();
-				if(o instanceof String[]) {
-					newValidator = (String[])o;
+			HttpApi api = topMenu.getApi();
+			if(api != null) {
+				/* TODO Maybe include where clause? */
+				conn = api.queryVideoDatabase("select " + topMenu.getDatabaseEpoch() + ",count("+keyColumn+"), sum("+keyColumn+") from "+table);
+				if(conn.hasMoreElements()) {
+					Object o = conn.nextElement();
+					if(o instanceof String[]) {
+						newValidator = (String[])o;
+					}
 				}
 			}
 		} finally {
@@ -250,16 +249,19 @@ public class DatabaseView extends SubMenu {
 		public void run()
 		{
 			try {
-				HttpApi api = getApi();
-				if(api != null) {
-					String[] newValidator = fetchCacheValidator(api);
-					if(newValidator == null 
-							|| cacheValidator == null 
-							|| !Utils.stringArraysEqual(newValidator, cacheValidator)) {
-						fetchData(api);
-						
-						if(!exit) 
-							cacheValidator = newValidator;
+				DatabaseTopMenu topMenu = getDatabaseTopMenu();
+				if(topMenu != null) {
+					HttpApi api = topMenu.getApi();
+					if(api != null) {
+						String[] newValidator = fetchCacheValidator(topMenu);
+						if(newValidator == null 
+								|| cacheValidator == null 
+								|| !Utils.stringArraysEqual(newValidator, cacheValidator)) {
+							fetchData(api);
+
+							if(!exit) 
+								cacheValidator = newValidator;
+						}
 					}
 				}
 			} catch(Exception e) {
