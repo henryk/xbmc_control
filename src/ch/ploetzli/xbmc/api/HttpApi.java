@@ -153,4 +153,8 @@ public class HttpApi {
 		return org.kobjects.base64.Base64.decode(data);
 	}
 
+	public void sendKey(int buttoncode) throws IOException {
+		simpleCommand("SendKey("+buttoncode+")");
+	}
+
 }
