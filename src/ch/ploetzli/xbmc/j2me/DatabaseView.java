@@ -21,11 +21,6 @@ import ch.ploetzli.xbmc.api.RecordSetConnection;
  * selected is defined though, so this class is generally subclassed with a
  * specific class that will know what to do when e.g. a year is selected.
  * 
- * This class cooperates and needs an instance of DatabaseTopMenu in the parent
- * chain in order to find a reference to the database, represented by an HttpApi
- * object. As such this class and the DatabaseTopMenu class are XBMC HTTP-API 
- * specific, while SubMenu is generic and reusable.
- * 
  * No constructor is defined for this class and instances should be retrieved
  * with one of the get methods, which will access a singleton cache in order
  * to reuse objects which are constructed with the same arguments. This will
@@ -35,7 +30,7 @@ import ch.ploetzli.xbmc.api.RecordSetConnection;
  * @author henryk
  *
  */
-public class DatabaseView extends SubMenu {
+public class DatabaseView extends DatabaseSubMenu {
 	protected static Ticker ticker = new Ticker("Loading ...");
 	
 	protected String keyColumn;
@@ -151,22 +146,6 @@ public class DatabaseView extends SubMenu {
 
 	public static DatabaseView get(String name, String keyColumn, String[] dataColumns, String table)	{
 		return get(DatabaseView.class, name, keyColumn, dataColumns, table, null, null, null);
-	}
-
-	/**
-	 * Follows the parent chain to find an instance of DatabaseTopMenu and returns it.
-	 * @return
-	 */
-	protected DatabaseTopMenu getDatabaseTopMenu()
-	{
-		SubMenu parent = this;
-		while( (parent = parent.getParent()) != null) {
-			if(parent instanceof DatabaseTopMenu) {
-				DatabaseTopMenu topMenu = ((DatabaseTopMenu)parent);
-				return topMenu;
-			}
-		}
-		return null;
 	}
 
 	/**

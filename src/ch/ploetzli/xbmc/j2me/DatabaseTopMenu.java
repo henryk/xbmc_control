@@ -4,7 +4,7 @@ import javax.microedition.lcdui.Displayable;
 
 import ch.ploetzli.xbmc.api.HttpApi;
 
-public class DatabaseTopMenu extends SubMenu {
+public class DatabaseTopMenu extends DatabaseSubMenu {
 	protected int databaseEpoch = 0;
 	
 	public DatabaseTopMenu(String name, SubMenu[] subMenus) {
@@ -45,5 +45,7 @@ public class DatabaseTopMenu extends SubMenu {
 		return d;
 	}
 	
-	
+	protected DatabaseTopMenu getDatabaseTopMenu() {
+		return this;
+	}
 }
