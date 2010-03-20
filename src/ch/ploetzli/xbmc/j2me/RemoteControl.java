@@ -70,7 +70,12 @@ public class RemoteControl extends DatabaseSubMenu {
 			} else if(getGameAction(keyCode) == RIGHT) {
 				sendKey(KEY_BUTTON_DPAD_RIGHT);
 			} else {
-				if( (keyCode > 0 && keyCode <= 127) ) {
+				if( (keyCode >= 'a' && keyCode <= 'z')) {
+					/* For ASCII characters the interface wants uppercase,
+					 * even though that isn't mentioned in the documentation anywhere
+					 */
+					sendKey(0xF100 + keyCode - 'a' + 'A');
+				} else if( (keyCode > 0 && keyCode <= 127) ) {
 					sendKey(0xF000 + keyCode);
 				}
 			}
