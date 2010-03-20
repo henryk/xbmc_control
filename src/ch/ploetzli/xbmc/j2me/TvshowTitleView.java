@@ -40,4 +40,12 @@ public class TvshowTitleView extends DatabaseView {
 		}
 		return new Object[]{label, img};
 	}
+
+	protected void select(String[] row) {
+		if(row.length > 1) {
+			DatabaseView v = TvshowEpisodeView.get(row[1]+" episodes", row[0]);
+			v.setParent(this);
+			show(v);
+		}
+	}
 }
