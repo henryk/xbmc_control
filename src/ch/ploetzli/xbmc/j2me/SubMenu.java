@@ -148,7 +148,7 @@ public class SubMenu implements CommandListener {
 	/**
 	 * Called when an item in this menu is selected and our 
 	 * 	displayable is a list. The default implementation will
-	 * 	show the selected sub menu i available, but subclasses
+	 * 	show the selected sub menu if available, but subclasses
 	 * 	might want to override that to do something else.
 	 * @param index The value of getSelectedIndex() as returned
 	 * 	by our displayable as a List
