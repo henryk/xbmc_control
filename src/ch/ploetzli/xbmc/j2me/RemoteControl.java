@@ -2,6 +2,7 @@ package ch.ploetzli.xbmc.j2me;
 
 import java.io.IOException;
 
+import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.game.GameCanvas;
 
@@ -14,6 +15,7 @@ public class RemoteControl extends DatabaseSubMenu {
 	static final int KEY_BUTTON_DPAD_DOWN = 271;
 	static final int KEY_BUTTON_DPAD_LEFT = 272;
 	static final int KEY_BUTTON_DPAD_RIGHT = 273;
+	static Command tabCommand = new Command("Tab", Command.ITEM, 10);
 	
 	public RemoteControl(String name) {
 		super(name);
@@ -21,9 +23,18 @@ public class RemoteControl extends DatabaseSubMenu {
 
 	protected Displayable constructDisplayable() {
 		Displayable canvas = new RemoteControlCanvas(name);
+		canvas.addCommand(tabCommand);
 		canvas.addCommand(backCommand);
 		canvas.setCommandListener(this);
 		return canvas;
+	}
+	
+	public void commandAction(Command cmd, Displayable d) {
+		if(cmd == tabCommand) {
+			sendKey(0xF009);
+		} else {
+			super.commandAction(cmd, d);
+		}
 	}
 	
 	public void sendKey(int buttoncode) {
