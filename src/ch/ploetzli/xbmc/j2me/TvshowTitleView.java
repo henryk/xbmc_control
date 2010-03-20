@@ -1,7 +1,5 @@
 package ch.ploetzli.xbmc.j2me;
 
-import java.io.InputStream;
-
 import javax.microedition.lcdui.Image;
 
 public class TvshowTitleView extends DatabaseView {
@@ -26,20 +24,12 @@ public class TvshowTitleView extends DatabaseView {
 			try {
 				int total = Integer.parseInt(data[2]);
 				int watched = Integer.parseInt(data[3]);
-				InputStream is = null;
-				if(watched == 0) {
-					/* Not watched */
-					is = this.getClass().getResourceAsStream("ball_none.png");
-				} else if(watched < total) {
-					/* Glass is half full */
-					is = this.getClass().getResourceAsStream("ball_half.png");
-				} else  {
-					/* Fully watched */
-					is = this.getClass().getResourceAsStream("ball.png");
-				}
-				if(is != null) {
-					img = Image.createImage(is);
-				}
+				if(watched == 0)
+					img = ImageFactory.getResourceImage(ImageFactory.ICON_EMPTY);
+				else if(watched < total)
+					img = ImageFactory.getResourceImage(ImageFactory.ICON_HALF);
+				else if(watched == total)
+					img = ImageFactory.getResourceImage(ImageFactory.ICON_FULL);
 			} catch(Exception e) {
 				/* Ignore, but set no image */
 				e.printStackTrace();
