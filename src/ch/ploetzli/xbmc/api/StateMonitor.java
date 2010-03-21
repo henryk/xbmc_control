@@ -136,7 +136,6 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	}
 	
 	private synchronized void schedulePoll() {
-		System.out.println("Schedule this!");
 		this.notify();
 	}
 

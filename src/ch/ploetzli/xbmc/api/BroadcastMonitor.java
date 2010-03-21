@@ -127,7 +127,6 @@ public class BroadcastMonitor extends Thread
 	}
 	
 	public synchronized void addListener(BroadcastListener listener, int notificationLevel) {
-		System.out.println("Adding "+listener.hashCode());
 		listeners.put(listener, new Integer(notificationLevel));
 		enableBroadcast(notificationLevel);
 	}

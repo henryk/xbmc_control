@@ -24,7 +24,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		super(name);
 		HttpApi api = getApi();
 		if(api != null) {
-			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_BASIC);
+			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
 		}
 	}
 
