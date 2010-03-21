@@ -9,6 +9,7 @@ import javax.microedition.lcdui.game.GameCanvas;
 
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.StateListener;
+import ch.ploetzli.xbmc.api.StateMonitor;
 
 public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	/* Constants from key.h */
@@ -23,7 +24,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		super(name);
 		HttpApi api = getApi();
 		if(api != null) {
-			api.getStateMonitor().registerListener(this);
+			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
 		}
 	}
 
@@ -86,7 +87,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	private void unpause() {
 		HttpApi api = getApi();
 		if(api != null) {
-			api.getStateMonitor().registerListener(this);
+			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
 		}
 	}
 	
