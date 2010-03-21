@@ -19,6 +19,11 @@ public class BroadcastMonitor extends Thread
 	{
 		super();
 		this.api = api;
+	}
+	
+	public void run()
+	{
+		final int max = 1200;
 		int port = enableBroadcast(0);
 		try {
 			if(port != -1)
@@ -26,13 +31,8 @@ public class BroadcastMonitor extends Thread
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		if(conn != null)
-			start();
-	}
-	
-	public void run()
-	{
-		final int max = 1200;
+		if(conn == null)
+			return;
 		
 		try {
 			Datagram d = conn.newDatagram(max);

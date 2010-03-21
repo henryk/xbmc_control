@@ -18,7 +18,7 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	private HttpApi api;
 	private Hashtable listeners = new Hashtable();
 	private Hashtable properties = new Hashtable();
-	private Object cookie = new Object();
+	private Object cookie;
 	
 	/**
 	 * The listener is only interested in basic information such as
@@ -41,7 +41,8 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	public StateMonitor(HttpApi api) {
 		super();
 		this.api = api;
-		start();
+		if(cookie == null)
+			cookie = new Object();
 	}
 
 	public void run() {
@@ -194,6 +195,12 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	 * a private object.
 	 */
 	public int hashCode() {
+		if(cookie == null) {
+			/* Extra super fun: The super() constructor on Nokia series 60
+			 * seems to call hashCode(), before cookie is set.
+			 */
+			cookie = new Object();
+		}
 		return cookie.hashCode();
 	}
 }

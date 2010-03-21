@@ -19,9 +19,11 @@ public class HttpApi {
 		baseurl = "http://"+address+":"+port+"/xbmcCmds/xbmcHttp";
 		name = displayName;
 		
-		/* State monitor needs the broadcast monitor to be initialized first */
 		broadcastMonitor = new BroadcastMonitor(this);
 		stateMonitor = new StateMonitor(this);
+		
+		broadcastMonitor.start();
+		stateMonitor.start();
 	}
 	
 	public String getName()

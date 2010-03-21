@@ -7,7 +7,6 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
 import ch.ploetzli.xbmc.Utils;
-import ch.ploetzli.xbmc.api.BroadcastMonitor;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscoverer;
@@ -26,7 +25,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	
 	private int width;
 	private Hashtable devices;
-	private BroadcastMonitor broadcastMonitor;
 	
 	public XbmcPoc() {
 		this.display = Display.getDisplay(this);
@@ -78,8 +76,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		if (command == this.exit) {
 			if(this.disc != null)
 				this.disc.shutdown();
-			if(this.broadcastMonitor != null)
-				this.broadcastMonitor.shutdown();
 			this.notifyDestroyed();
 		} else if(command == this.fetch) {
 			new Thread(
@@ -178,8 +174,10 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		String address = (String)data[0];
 		int port = ((Integer)data[1]).intValue();
 		
-		disc.shutdown();
-		disc = null;
+		if(disc != null) {
+			disc.shutdown();
+			disc = null;
+		}
 		
 		api = new HttpApi(displayName, address, port);
 		seriesList.setTitle(displayName);
