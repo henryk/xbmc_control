@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
 
 import ch.ploetzli.xbmc.api.HttpApi;
@@ -69,7 +70,29 @@ public class RemoteControl extends DatabaseSubMenu {
 
 		protected RemoteControlCanvas(String name) {
 			super(false);
+			drawBackground(getWidth(), getHeight());
 			setTitle(name);
+		}
+		
+		private void drawBackground(int w, int h) {
+			Graphics g = getGraphics();
+			g.setClip(0, 0, w, h);
+			int width = g.getClipWidth();
+			int height = g.getClipHeight();
+			
+			g.setColor(0, 0, 0);
+			g.fillRect(0, 0, width, height);
+			
+			final int iterations = 10;
+			for(int i = 0; i<=iterations; i++) {
+				g.setColor(i*255/iterations, i*255/iterations, i*255/iterations);
+				g.fillRoundRect(i, i, width-2*i, height-2*i, iterations, iterations);
+			}
+		}
+
+		protected void sizeChanged(int w, int h) {
+			super.sizeChanged(w, h);
+			drawBackground(w, h);
 		}
 		
 		private void actOnKey(int keyCode) {
