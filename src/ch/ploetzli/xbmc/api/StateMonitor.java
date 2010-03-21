@@ -10,12 +10,12 @@ import java.util.Hashtable;
  * @author henryk
  *
  */
-public class StateMonitor extends Thread {
+public class StateMonitor extends Thread implements BroadcastListener {
 	private boolean exit = false;
 	private int maxInterestLevel = 0;
 	private final static int maxPollDelay = 60000;
 	private long pollDelay = maxPollDelay;
-	private HttpApi httpApi;
+	private HttpApi api;
 	private Hashtable listeners = new Hashtable();
 	private Hashtable properties = new Hashtable();
 	
@@ -37,9 +37,11 @@ public class StateMonitor extends Thread {
 	 */
 	public final static int INTEREST_TIME = 3;
 	
-	public StateMonitor(HttpApi httpApi) {
+	public StateMonitor(HttpApi api) {
 		super();
-		this.httpApi = httpApi;
+		this.api = api;
+		api.getBroadcastMonitor().addListener(this, 1);
+		start();
 	}
 
 	public void run() {
@@ -59,7 +61,7 @@ public class StateMonitor extends Thread {
 	public synchronized void pollStatus() {
 		String status[] = new String[]{};
 		try {
-			status = httpApi.getCurrentlyPlaying(true);
+			status = api.getCurrentlyPlaying(true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -120,12 +122,20 @@ public class StateMonitor extends Thread {
 		if(maxInterestLevel == 0) {
 			/* No one cares */
 			pollDelay = maxPollDelay;
-		} else if(maxInterestLevel == INTEREST_BASIC || maxInterestLevel == INTEREST_PERCENTAGE) {
-			/* FIXME Do something smart with Broadcasts */
+		} else if(maxInterestLevel == INTEREST_BASIC) {
+			/* The broadcast monitor will wake us */
+			pollDelay = maxPollDelay;
+		} else if(maxInterestLevel == INTEREST_PERCENTAGE) {
+			/* FIXME Do something smart with timing */
 			pollDelay = 10000;
 		} else if(maxInterestLevel == INTEREST_TIME) {
 			pollDelay = 1000;
 		}
+		this.notify();
+	}
+	
+	private synchronized void schedulePoll() {
+		System.out.println("Schedule this!");
 		this.notify();
 	}
 
@@ -172,5 +182,9 @@ public class StateMonitor extends Thread {
 			}
 			setMaxInterestLevel(m);
 		}
+	}
+
+	public void broadcastReceived(String source, String name, String data, int level) {
+		schedulePoll();
 	}
 }

@@ -10,19 +10,24 @@ import javax.microedition.io.Connector;
 
 public class BroadcastMonitor extends Thread
 {
-	private DatagramConnection conn;
+	private DatagramConnection conn = null;
 	private Hashtable listeners = new Hashtable();
 	boolean exit = false;
+	private HttpApi api;
 
-	public BroadcastMonitor(int port)
+	public BroadcastMonitor(HttpApi api)
 	{
 		super();
+		this.api = api;
+		int port = enableBroadcast(0);
 		try {
-			this.conn = (DatagramConnection)Connector.open("datagram://:"+port);
+			if(port != -1)
+				conn = (DatagramConnection)Connector.open("datagram://:"+port);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		if(conn != null)
+			start();
 	}
 	
 	public void run()
@@ -41,6 +46,7 @@ public class BroadcastMonitor extends Thread
 			}
 		} catch(Exception e) { /* Must be a class that includes InterruptedException and not only IOException */
 			/* Ignore and exit */
+			e.printStackTrace();
 		}
 	}
 	
@@ -87,14 +93,38 @@ public class BroadcastMonitor extends Thread
 	private synchronized void broadcastReceived(String address, String name, String value, int level) {
 		for(Enumeration e = listeners.keys(); e.hasMoreElements(); ) {
 			BroadcastListener listener = (BroadcastListener) e.nextElement();
-			int notificationLevel = ((Integer)listeners.get(listener)).intValue();
+			Integer o = (Integer) listeners.get(listener);
+			int notificationLevel = o.intValue();
 			if(notificationLevel >= level)
 				listener.broadcastReceived(address, name, value, level);
 		}
 	}
 	
+	public int enableBroadcast(int notificationLevel) {
+		try {
+			String broadcast[] = api.getBroadcast();
+			if(broadcast.length > 0 && !(broadcast[0].startsWith("Error"))) {
+				int pos = broadcast[0].indexOf(';');
+				if(pos != -1) {
+					int setting = Integer.parseInt(broadcast[0].substring(0, pos));
+					int broadcastPort = Integer.parseInt(broadcast[0].substring(pos+1));
+					if(setting < notificationLevel) {
+						api.setBroadcast(1, broadcastPort);
+					}
+					return broadcastPort;
+				}
+			}
+		} catch(IOException e) {
+			/* Ignore, but return -1 to signify failure */
+			System.err.println(e);
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
 	public synchronized void addListener(BroadcastListener listener, int notificationLevel) {
 		listeners.put(listener, new Integer(notificationLevel));
+		enableBroadcast(notificationLevel);
 	}
 	
 	public synchronized void removeListener(BroadcastListener listener) {

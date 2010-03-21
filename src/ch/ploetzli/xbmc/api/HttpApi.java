@@ -12,13 +12,16 @@ public class HttpApi {
 	private String baseurl;
 	private String name;
 	private StateMonitor stateMonitor;
+	private BroadcastMonitor broadcastMonitor;
 	
 	public HttpApi(String displayName, String address, int port)
 	{
 		baseurl = "http://"+address+":"+port+"/xbmcCmds/xbmcHttp";
 		name = displayName;
+		
+		/* State monitor needs the broadcast monitor to be initialized first */
+		broadcastMonitor = new BroadcastMonitor(this);
 		stateMonitor = new StateMonitor(this);
-		stateMonitor.start();
 	}
 	
 	public String getName()
@@ -161,6 +164,10 @@ public class HttpApi {
 
 	public StateMonitor getStateMonitor() {
 		return stateMonitor;
+	}
+	
+	public BroadcastMonitor getBroadcastMonitor() {
+		return broadcastMonitor;
 	}
 
 	public String[] getCurrentlyPlaying(boolean extended) throws IOException {

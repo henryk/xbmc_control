@@ -182,27 +182,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		disc = null;
 		
 		api = new HttpApi(displayName, address, port);
-		try {
-			String broadcast[] = api.getBroadcast();
-			if(broadcast.length > 0 && !(broadcast[0].startsWith("Error"))) {
-				int pos = broadcast[0].indexOf(';');
-				if(pos != -1) {
-					int setting = Integer.parseInt(broadcast[0].substring(0, pos));
-					int broadcastPort = Integer.parseInt(broadcast[0].substring(pos+1));
-					if(setting == 0) {
-						/* Enable at least basic broadcasting */
-						api.setBroadcast(1, broadcastPort);
-					}
-					broadcastMonitor = new BroadcastMonitor(broadcastPort);
-					broadcastMonitor.start();
-				}
-			}
-		} catch(IOException e) {
-			/* Ignore, but don't set up broadcast listener */
-			System.err.println(e);
-			e.printStackTrace();
-		}
-		
 		seriesList.setTitle(displayName);
 		
 		topMenu = new DatabaseTopMenu(displayName, new SubMenu[]{
