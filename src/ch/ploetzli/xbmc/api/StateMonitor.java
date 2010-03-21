@@ -13,6 +13,8 @@ import java.util.Hashtable;
 public class StateMonitor extends Thread {
 	private boolean exit = false;
 	private int maxInterestLevel = 0;
+	private final static int maxPollDelay = 60000;
+	private long pollDelay = maxPollDelay;
 	private HttpApi httpApi;
 	private Hashtable listeners = new Hashtable();
 	private Hashtable properties = new Hashtable();
@@ -43,9 +45,9 @@ public class StateMonitor extends Thread {
 	public void run() {
 		while(!exit) {
 			try {
-				Thread.sleep(1000);
 				synchronized(this) {
-					if(maxInterestLevel > 0)
+					this.wait(pollDelay);
+					if(maxInterestLevel > 0 && !exit)
 						pollStatus();
 				}
 			} catch (InterruptedException e) {
@@ -113,8 +115,18 @@ public class StateMonitor extends Thread {
 			((StateListener)e.nextElement()).valueChanged(property, value);
 	}
 
-	private void setMaxInterestLevel(int interestLevel) {
+	private synchronized void setMaxInterestLevel(int interestLevel) {
 		maxInterestLevel = interestLevel;
+		if(maxInterestLevel == 0) {
+			/* No one cares */
+			pollDelay = maxPollDelay;
+		} else if(maxInterestLevel == INTEREST_BASIC || maxInterestLevel == INTEREST_PERCENTAGE) {
+			/* FIXME Do something smart with Broadcasts */
+			pollDelay = 10000;
+		} else if(maxInterestLevel == INTEREST_TIME) {
+			pollDelay = 1000;
+		}
+		this.notify();
 	}
 
 	/**
