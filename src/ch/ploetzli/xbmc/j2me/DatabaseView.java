@@ -1,7 +1,6 @@
 package ch.ploetzli.xbmc.j2me;
 
 import java.io.IOException;
-import java.util.Hashtable;
 import java.util.Vector;
 
 import javax.microedition.lcdui.Displayable;
@@ -46,22 +45,7 @@ public class DatabaseView extends DatabaseSubMenu {
 	/**
 	 * Cache of constructed objects to be used by get
 	 */
-	protected static Hashtable objectCache = new Hashtable();
-	/**
-	 * LRU list of keys from the objectCache member, to ensure
-	 * the limit of objectCacheMax objects in the cache.
-	 * The vector contains the keys into objectCache in ascending order
-	 * of least-recent-usedness, e.g. the last element will be the most
-	 * recently returned and the first object will be the least recently
-	 * returned and next candidate for dropping.
-	 */
-	protected static Vector objectCacheKeys = new Vector();
-	/**
-	 * Keep at most this many objects cached in objectCache.
-	 * When residency reaches this number the oldest object, as determined
-	 * by objectCacheKeys gets removed before a new one is inserted.
-	 */
-	protected final static int objectCacheMax = 35;
+	protected static LRUHashtable objectCache = new LRUHashtable(35);
 	
 	/**
 	 * Default constructor, necessary for construction through Class.newInstance();
@@ -77,12 +61,8 @@ public class DatabaseView extends DatabaseSubMenu {
 		DatabaseView v = null;
 		
 		synchronized(objectCache) {
-			if(objectCache.containsKey(cacheKey)) {
-				/* Object already in cache, update LRU list, return cached object */
-				objectCacheKeys.removeElement(cacheKey);
-				objectCacheKeys.addElement(cacheKey);
-				v = (DatabaseView)objectCache.get(cacheKey);
-			} else {
+			v = (DatabaseView)objectCache.get(cacheKey);
+			if(v == null) {
 				/* Must construct new object */
 				try {
 					v = (DatabaseView)c.newInstance();
@@ -91,15 +71,7 @@ public class DatabaseView extends DatabaseSubMenu {
 				}
 				v.setArguments(name, keyColumn, dataColumns, table, orderClause, groupClause, whereClause);
 				
-				while(objectCacheKeys.size() >= objectCacheMax) {
-					/* Drop oldest element from cache */
-					String oldCacheKey = (String)objectCacheKeys.elementAt(0);
-					objectCacheKeys.removeElementAt(0);
-					objectCache.remove(oldCacheKey);
-				}
-				
 				/* Add element to cache */
-				objectCacheKeys.addElement(cacheKey);
 				objectCache.put(cacheKey, v);
 			}
 		return v;
