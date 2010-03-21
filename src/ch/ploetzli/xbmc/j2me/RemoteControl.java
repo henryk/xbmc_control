@@ -90,7 +90,17 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
-	protected class RemoteControlCanvas extends GameCanvas implements StateListener {
+	public void stateSynchronized() {
+		
+	}
+
+	public void valueChanged(String property, String newValue) {
+		if(property.equals("Percentage")) {
+			System.out.println("Play progress: " + newValue);
+		}
+	}
+	
+	protected class RemoteControlCanvas extends GameCanvas {
 
 		protected RemoteControlCanvas(String name) {
 			super(false);
@@ -168,5 +178,5 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			super.keyRepeated(keyCode);
 		}
 	}
-	
+
 }

@@ -18,11 +18,11 @@ public class HttpApi {
 		baseurl = "http://"+address+":"+port+"/xbmcCmds/xbmcHttp";
 		name = displayName;
 		stateMonitor = new StateMonitor(this);
+		stateMonitor.start();
 	}
 	
 	public String getName()
 	{
-
 		return name;
 	}
 
@@ -164,7 +164,7 @@ public class HttpApi {
 	}
 
 	public String[] getCurrentlyPlaying(boolean extended) throws IOException {
-		return simpleCommand("GetCurrentlyPlaying(,,,"+extended+",)");
+		return simpleCommand("GetCurrentlyPlaying(,,,"+extended+",)", true);
 	}
 
 }
