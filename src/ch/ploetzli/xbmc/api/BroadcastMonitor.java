@@ -92,11 +92,15 @@ public class BroadcastMonitor extends Thread
 
 	private synchronized void broadcastReceived(String address, String name, String value, int level) {
 		for(Enumeration e = listeners.keys(); e.hasMoreElements(); ) {
-			BroadcastListener listener = (BroadcastListener) e.nextElement();
-			Integer o = (Integer) listeners.get(listener);
-			int notificationLevel = o.intValue();
+			Object key = e.nextElement();
+			if(!listeners.containsKey(key)) {
+				System.err.println("BUG: "+key.hashCode()+" is not in the Hashtable");
+				continue;
+			}
+			Object val = listeners.get(key);
+			int notificationLevel = ((Integer)val).intValue();
 			if(notificationLevel >= level)
-				listener.broadcastReceived(address, name, value, level);
+				((BroadcastListener)key).broadcastReceived(address, name, value, level);
 		}
 	}
 	
@@ -123,6 +127,7 @@ public class BroadcastMonitor extends Thread
 	}
 	
 	public synchronized void addListener(BroadcastListener listener, int notificationLevel) {
+		System.out.println("Adding "+listener.hashCode());
 		listeners.put(listener, new Integer(notificationLevel));
 		enableBroadcast(notificationLevel);
 	}

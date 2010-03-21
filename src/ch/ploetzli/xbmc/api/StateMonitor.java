@@ -40,11 +40,11 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	public StateMonitor(HttpApi api) {
 		super();
 		this.api = api;
-		api.getBroadcastMonitor().addListener(this, 1);
 		start();
 	}
 
 	public void run() {
+		api.getBroadcastMonitor().addListener(this, 1);
 		while(!exit) {
 			try {
 				synchronized(this) {
@@ -186,5 +186,14 @@ public class StateMonitor extends Thread implements BroadcastListener {
 
 	public void broadcastReceived(String source, String name, String data, int level) {
 		schedulePoll();
+	}
+	
+	/* There is some extensive weirdness going on that seems to prevent Thread objects
+	 * from being put into a Hashtable. The hashCode() seems to be changing between the
+	 * initial put() and the subsequent get(). As a workaround, set the hashCode() to
+	 * some random fixed value.
+	 */
+	public int hashCode() {
+		return 4; // chosen by fair dice roll, guaranteed to be random
 	}
 }
