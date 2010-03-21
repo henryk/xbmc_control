@@ -7,7 +7,7 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
 import ch.ploetzli.xbmc.Utils;
-import ch.ploetzli.xbmc.api.BroadcastReceiver;
+import ch.ploetzli.xbmc.api.BroadcastMonitor;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscoverer;
@@ -26,7 +26,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	
 	private int width;
 	private Hashtable devices;
-	private BroadcastReceiver broadcastReceiver;
+	private BroadcastMonitor broadcastMonitor;
 	
 	public XbmcPoc() {
 		this.display = Display.getDisplay(this);
@@ -78,8 +78,8 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		if (command == this.exit) {
 			if(this.disc != null)
 				this.disc.shutdown();
-			if(this.broadcastReceiver != null)
-				this.broadcastReceiver.shutdown();
+			if(this.broadcastMonitor != null)
+				this.broadcastMonitor.shutdown();
 			this.notifyDestroyed();
 		} else if(command == this.fetch) {
 			new Thread(
@@ -193,8 +193,8 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 						/* Enable at least basic broadcasting */
 						api.setBroadcast(1, broadcastPort);
 					}
-					broadcastReceiver = new BroadcastReceiver(broadcastPort);
-					broadcastReceiver.start();
+					broadcastMonitor = new BroadcastMonitor(broadcastPort);
+					broadcastMonitor.start();
 				}
 			}
 		} catch(IOException e) {
