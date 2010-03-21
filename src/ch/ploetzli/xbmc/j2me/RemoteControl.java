@@ -8,8 +8,9 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.game.GameCanvas;
 
 import ch.ploetzli.xbmc.api.HttpApi;
+import ch.ploetzli.xbmc.api.StateListener;
 
-public class RemoteControl extends DatabaseSubMenu {
+public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	/* Constants from key.h */
 	static final int KEY_BUTTON_A = 256;
 	static final int KEY_BUTTON_DPAD_UP = 270;
@@ -20,6 +21,10 @@ public class RemoteControl extends DatabaseSubMenu {
 	
 	public RemoteControl(String name) {
 		super(name);
+		HttpApi api = getApi();
+		if(api != null) {
+			api.getStateMonitor().registerListener(this);
+		}
 	}
 
 	protected Displayable constructDisplayable() {
@@ -43,12 +48,7 @@ public class RemoteControl extends DatabaseSubMenu {
 	}
 	
 	public void sendKey(int buttoncode) {
-		DatabaseTopMenu topMenu = getDatabaseTopMenu();
-		if(topMenu == null)
-			return;
-		HttpApi api = topMenu.getApi();
-		if(api == null)
-			return;
+		HttpApi api = getApi();
 		new Thread() {
 			private int buttoncode;
 			private HttpApi api;
@@ -65,8 +65,32 @@ public class RemoteControl extends DatabaseSubMenu {
 			}
 		}.start(api, buttoncode);
 	}
+
+	private HttpApi getApi() {
+		DatabaseTopMenu topMenu = getDatabaseTopMenu();
+		if(topMenu == null)
+			return null;
+		HttpApi api = topMenu.getApi();
+		if(api == null)
+			return null;
+		return api;
+	}
 	
-	protected class RemoteControlCanvas extends GameCanvas {
+	private void pause() {
+		HttpApi api = getApi();
+		if(api != null) {
+			api.getStateMonitor().unregisterListener(this);
+		}
+	}
+	
+	private void unpause() {
+		HttpApi api = getApi();
+		if(api != null) {
+			api.getStateMonitor().registerListener(this);
+		}
+	}
+	
+	protected class RemoteControlCanvas extends GameCanvas implements StateListener {
 
 		protected RemoteControlCanvas(String name) {
 			super(false);
@@ -93,6 +117,16 @@ public class RemoteControl extends DatabaseSubMenu {
 		protected void sizeChanged(int w, int h) {
 			super.sizeChanged(w, h);
 			drawBackground(w, h);
+		}
+		
+		protected void hideNotify() {
+			pause();
+			super.hideNotify();
+		}
+		
+		protected void showNotify() {
+			unpause();
+			super.hideNotify();
 		}
 		
 		private void actOnKey(int keyCode) {
@@ -134,4 +168,5 @@ public class RemoteControl extends DatabaseSubMenu {
 			super.keyRepeated(keyCode);
 		}
 	}
+	
 }

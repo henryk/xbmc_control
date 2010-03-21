@@ -11,11 +11,13 @@ import ch.ploetzli.xbmc.Utils;
 public class HttpApi {
 	private String baseurl;
 	private String name;
+	private StateMonitor stateMonitor;
 	
 	public HttpApi(String displayName, String address, int port)
 	{
 		baseurl = "http://"+address+":"+port+"/xbmcCmds/xbmcHttp";
 		name = displayName;
+		stateMonitor = new StateMonitor(this);
 	}
 	
 	public String getName()
@@ -155,6 +157,14 @@ public class HttpApi {
 
 	public void sendKey(int buttoncode) throws IOException {
 		simpleCommand("SendKey("+buttoncode+")");
+	}
+
+	public StateMonitor getStateMonitor() {
+		return stateMonitor;
+	}
+
+	public String[] getCurrentlyPlaying(boolean extended) throws IOException {
+		return simpleCommand("GetCurrentlyPlaying(,,,"+extended+",)");
 	}
 
 }
