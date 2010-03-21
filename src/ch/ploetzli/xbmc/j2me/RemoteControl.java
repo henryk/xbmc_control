@@ -20,6 +20,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	static final int KEY_BUTTON_DPAD_LEFT = 272;
 	static final int KEY_BUTTON_DPAD_RIGHT = 273;
 	static Command tabCommand = new Command("Tab", Command.ITEM, 10);
+	private RemoteControlCanvas canvas = null;
 	
 	public RemoteControl(String name) {
 		super(name);
@@ -30,9 +31,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 
 	protected Displayable constructDisplayable() {
-		Displayable canvas = new RemoteControlCanvas(name);
-		addPrivateCommands(canvas);
-		canvas.setCommandListener(this);
+		if(canvas == null) {
+			canvas = new RemoteControlCanvas(name);
+			addPrivateCommands(canvas);
+			canvas.setCommandListener(this);
+		}
 		return canvas;
 	}
 	
@@ -93,45 +96,68 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	public void stateSynchronized() {
-		
+		if(canvas == null)
+			constructDisplayable();
+		if(canvas != null)
+			canvas.refresh();
 	}
 
 	public void valueChanged(String property, String newValue) {
 		if(property.equals("Percentage")) {
 			System.out.println("Play progress: " + newValue);
 		} else if(property.equals("Thumb")) {
-			Image img = null;
-			try {
-				img = ImageFactory.getRemoteImage(getApi(), newValue);
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			if(displayable != null && displayable instanceof RemoteControlCanvas) {
-				((RemoteControlCanvas)displayable).drawThumb(img);
-			}
+			if(canvas == null)
+				constructDisplayable();
+			if(canvas != null)
+				canvas.setThumbUrl(newValue);
 		}
 	}
 	
-	protected class RemoteControlCanvas extends GameCanvas {
+	protected class RemoteControlCanvas extends GameCanvas implements Runnable {
+		private Image thumb = null;
+		private String thumbUrl = null;
+		private boolean thumbDirty = false;
 
 		protected RemoteControlCanvas(String name) {
 			super(false);
-			drawBackground(getWidth(), getHeight());
 			setTitle(name);
 		}
 		
-		protected void drawThumb(Image img) {
-			if(img == null) {
-				drawBackground(getWidth(), getHeight());
-			} else {
-				Graphics g = getGraphics();
-				int height = getHeight();
-				g.drawImage(img, 20, height-20, Graphics.BOTTOM | Graphics.LEFT);
+		public void run() {
+			synchronized(this) {
+				if(thumbDirty) {
+					drawBackground(getWidth(), getHeight());
+					thumb = null;
+					try {
+						thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
+					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					if(thumb != null) {
+						Graphics g = getGraphics();
+						int height = getHeight();
+						g.drawImage(thumb, 20, height-20, Graphics.BOTTOM | Graphics.LEFT);
+					}
+
+					flushGraphics();
+				}
 			}
-			
-			flushGraphics();
+		}
+		
+		public void refresh() {
+			new Thread(this).start();
+		}
+		
+		public synchronized void setThumbUrl(String newValue) {
+			if( thumbUrl == null && newValue == null)
+				return; /* Nothing to do */
+			else if( thumbUrl != null || newValue != null || !thumbUrl.equals(newValue)) { 
+				thumbUrl = newValue;
+				thumbDirty = true;
+			}
 		}
 
 		private void drawBackground(int w, int h) {
@@ -148,10 +174,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				g.setColor(i*255/iterations, i*255/iterations, i*255/iterations);
 				g.fillRoundRect(i, i, width-2*i, height-2*i, iterations, iterations);
 			}
-			
-			flushGraphics();
 		}
-
+		
 		protected void sizeChanged(int w, int h) {
 			super.sizeChanged(w, h);
 			drawBackground(w, h);
