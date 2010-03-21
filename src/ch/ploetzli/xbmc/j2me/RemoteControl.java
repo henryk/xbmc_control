@@ -5,6 +5,7 @@ import java.io.IOException;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.GameCanvas;
 
 import ch.ploetzli.xbmc.api.HttpApi;
@@ -98,6 +99,18 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	public void valueChanged(String property, String newValue) {
 		if(property.equals("Percentage")) {
 			System.out.println("Play progress: " + newValue);
+		} else if(property.equals("Thumb")) {
+			Image img = null;
+			try {
+				img = ImageFactory.getRemoteImage(getApi(), newValue);
+			} catch (IllegalArgumentException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			if(displayable != null && displayable instanceof RemoteControlCanvas) {
+				((RemoteControlCanvas)displayable).drawThumb(img);
+			}
 		}
 	}
 	
@@ -109,6 +122,18 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			setTitle(name);
 		}
 		
+		protected void drawThumb(Image img) {
+			if(img == null) {
+				drawBackground(getWidth(), getHeight());
+			} else {
+				Graphics g = getGraphics();
+				int height = getHeight();
+				g.drawImage(img, 20, height-20, Graphics.BOTTOM | Graphics.LEFT);
+			}
+			
+			flushGraphics();
+		}
+
 		private void drawBackground(int w, int h) {
 			Graphics g = getGraphics();
 			g.setClip(0, 0, w, h);
@@ -123,6 +148,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				g.setColor(i*255/iterations, i*255/iterations, i*255/iterations);
 				g.fillRoundRect(i, i, width-2*i, height-2*i, iterations, iterations);
 			}
+			
+			flushGraphics();
 		}
 
 		protected void sizeChanged(int w, int h) {

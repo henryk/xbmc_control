@@ -6,8 +6,12 @@ import java.util.Hashtable;
 
 import javax.microedition.lcdui.Image;
 
+import ch.ploetzli.xbmc.LRUHashtable;
+import ch.ploetzli.xbmc.api.HttpApi;
+
 public class ImageFactory {
-	private static Hashtable ResourceImageCache = new Hashtable();
+	private static Hashtable resourceImageCache = new Hashtable();
+	private static Hashtable remoteImageCache = new LRUHashtable(100);
 	public static final String ICON_EMPTY = "ball_none.png";
 	public static final String ICON_HALF = "ball_half.png";
 	public static final String ICON_FULL = "ball.png";
@@ -26,15 +30,30 @@ public class ImageFactory {
 		Image img = null;
 		if(imageName == null)
 			return null;
-		img = (Image)ResourceImageCache.get(imageName);
+		img = (Image)resourceImageCache.get(imageName);
 		if(img == null) {
 			InputStream is = ImageFactory.class.getResourceAsStream(imageName);
 			if(is != null) {
 				img = Image.createImage(is);
 				if(img != null) {
-					ResourceImageCache.put(imageName, img);
+					resourceImageCache.put(imageName, img);
 				}
 			}
+		}
+		return img;
+	}
+	
+	public static Image getRemoteImage(HttpApi api, String url) throws IOException, IllegalArgumentException {
+		if(url == null)
+			return null;
+		Image img = (Image) remoteImageCache.get(url);
+		if(img == null) {
+			byte[] data = api.fileDownload(url);
+			if(data.length == 0)
+				return null;
+			img = Image.createImage(data, 0, data.length);
+			if(img != null)
+				remoteImageCache.put(url, img);
 		}
 		return img;
 	}
