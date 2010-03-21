@@ -38,11 +38,8 @@ public class DatabaseTopMenu extends DatabaseSubMenu {
 		databaseEpoch++;
 	}
 
-	protected Displayable constructDisplayable() {
-		Displayable d = super.constructDisplayable();
-		/* This is the top level menu, remove the back command */
-		d.removeCommand(backCommand);
-		return d;
+	protected void addPrivateCommands(Displayable d) {
+		/* This is the top level menu, no back command */
 	}
 	
 	protected DatabaseTopMenu getDatabaseTopMenu() {

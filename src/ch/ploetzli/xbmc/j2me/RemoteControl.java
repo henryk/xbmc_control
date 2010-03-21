@@ -23,10 +23,14 @@ public class RemoteControl extends DatabaseSubMenu {
 
 	protected Displayable constructDisplayable() {
 		Displayable canvas = new RemoteControlCanvas(name);
-		canvas.addCommand(tabCommand);
-		canvas.addCommand(backCommand);
+		addPrivateCommands(canvas);
 		canvas.setCommandListener(this);
 		return canvas;
+	}
+	
+	protected void addPrivateCommands(Displayable d) {
+		d.addCommand(tabCommand);
+		super.addPrivateCommands(d);
 	}
 	
 	public void commandAction(Command cmd, Displayable d) {

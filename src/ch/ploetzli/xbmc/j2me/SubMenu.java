@@ -114,9 +114,13 @@ public class SubMenu implements CommandListener {
 			labels = new String[]{"Nothing here"};
 		}
 		List list = new List(name, List.IMPLICIT, labels, null);
-		list.addCommand(backCommand);
+		addPrivateCommands(list);
 		list.setCommandListener(this);
 		return list;
+	}
+	
+	protected void addPrivateCommands(Displayable d) {
+		d.addCommand(backCommand);
 	}
 
 	public void setCommandListener(CommandListener listener) {
