@@ -18,6 +18,7 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	private HttpApi api;
 	private Hashtable listeners = new Hashtable();
 	private Hashtable properties = new Hashtable();
+	private Object cookie = new Object();
 	
 	/**
 	 * The listener is only interested in basic information such as
@@ -190,10 +191,10 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	
 	/* There is some extensive weirdness going on that seems to prevent Thread objects
 	 * from being put into a Hashtable. The hashCode() seems to be changing between the
-	 * initial put() and the subsequent get(). As a workaround, set the hashCode() to
-	 * some random fixed value.
+	 * initial put() and the subsequent get(). As a workaround, borrow the hashCode from
+	 * a private object.
 	 */
 	public int hashCode() {
-		return 4; // chosen by fair dice roll, guaranteed to be random
+		return cookie.hashCode();
 	}
 }
