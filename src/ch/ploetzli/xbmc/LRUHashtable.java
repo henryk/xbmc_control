@@ -1,4 +1,4 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc;
 
 import java.util.Hashtable;
 import java.util.Vector;
