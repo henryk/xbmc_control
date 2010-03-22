@@ -8,7 +8,9 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.GameCanvas;
 
+import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
+import ch.ploetzli.xbmc.api.RecordSetConnection;
 import ch.ploetzli.xbmc.api.StateListener;
 import ch.ploetzli.xbmc.api.StateMonitor;
 
@@ -31,10 +33,12 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 
 	protected Displayable constructDisplayable() {
-		if(canvas == null) {
-			canvas = new RemoteControlCanvas(name);
-			addPrivateCommands(canvas);
-			canvas.setCommandListener(this);
+		synchronized(this) {
+			if(canvas == null) {
+				canvas = new RemoteControlCanvas(name);
+				addPrivateCommands(canvas);
+				canvas.setCommandListener(this);
+			}
 		}
 		return canvas;
 	}
@@ -110,6 +114,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				constructDisplayable();
 			if(canvas != null)
 				canvas.setThumbUrl(newValue);
+		} else if(property.equals("Show Title")) {
+			if(canvas == null)
+				constructDisplayable();
+			if(canvas != null)
+				canvas.setTvshowTitle(newValue);
 		}
 	}
 	
@@ -117,6 +126,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		private Image thumb = null;
 		private String thumbUrl = null;
 		private boolean thumbDirty = false;
+		
+		private Image tvshowThumb = null;
+		private String tvshowTitle = null;
+		private boolean tvshowDirty = false;
 
 		protected RemoteControlCanvas(String name) {
 			super(false);
@@ -125,28 +138,62 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 		public void run() {
 			synchronized(this) {
-				if(thumbDirty) {
+				if(thumbDirty || tvshowDirty) {
 					drawBackground(getWidth(), getHeight());
 					
-					thumb = null;
-					try {
-						thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
-					} catch (IllegalArgumentException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
+					if(thumbDirty) {
+						thumb = null;
+						try {
+							thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
+						} catch (IllegalArgumentException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+
+						if(thumb != null) {
+							Graphics g = getGraphics();
+							int height = getHeight();
+							int width = getWidth();
+
+							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+
+							g.drawImage(thumb, 10, height-10, Graphics.BOTTOM | Graphics.LEFT);
+						}
 					}
 					
-					if(thumb != null) {
-						Graphics g = getGraphics();
-						int height = getHeight();
-						int width = getWidth();
-						
-						thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
-						
-						g.drawImage(thumb, 10, height-10, Graphics.BOTTOM | Graphics.LEFT);
-					}
+					if(tvshowDirty) {
+						tvshowThumb = null;
+						HttpApi api = getApi();
+						if(api != null && tvshowTitle != null) {
+							try {
+								RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+tvshowTitle+"' LIMIT 1");
+								String data[] = new String[]{};
+								if(conn.hasMoreElements())
+									data = (String[]) conn.nextElement();
+								if(data.length > 0) {
+									String crc = Utils.crc32(data[0]);
+									tvshowThumb = ImageFactory.getRemoteImage(api, "special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
+								}
 
+								if(tvshowThumb != null) {
+									Graphics g = getGraphics();
+									int height = getHeight();
+									int width = getWidth();
+
+									tvshowThumb = ImageFactory.scaleImageToFit(tvshowThumb,
+											width-20, (int)(height*0.3));
+
+									g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
+								}
+
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+						}
+					}
+					
+					tvshowDirty = thumbDirty = false;
 					flushGraphics();
 				}
 			}
@@ -160,8 +207,19 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			if( thumbUrl == null && newValue == null)
 				return; /* Nothing to do */
 			else if( thumbUrl != null || newValue != null || !thumbUrl.equals(newValue)) { 
+				System.out.println("Thumb dirty");
 				thumbUrl = newValue;
 				thumbDirty = true;
+			}
+		}
+
+		public synchronized void setTvshowTitle(String newValue) {
+			if( tvshowTitle == null && newValue == null)
+				return; /* Nothing to do */
+			else if( tvshowTitle != null || newValue != null || !tvshowTitle.equals(newValue)) {
+				System.out.println("Show dirty");
+				tvshowTitle = newValue;
+				tvshowDirty = true;
 			}
 		}
 
@@ -176,14 +234,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			
 			final int iterations = 10;
 			for(int i = 0; i<=iterations; i++) {
-				g.setColor(i*255/iterations, i*255/iterations, i*255/iterations);
+				g.setColor(i*40/iterations, i*40/iterations, i*40/iterations);
 				g.fillRoundRect(i, i, width-2*i, height-2*i, iterations, iterations);
 			}
 		}
 		
 		protected void sizeChanged(int w, int h) {
 			super.sizeChanged(w, h);
-			drawBackground(w, h);
+			refresh();
 		}
 		
 		protected void hideNotify() {
