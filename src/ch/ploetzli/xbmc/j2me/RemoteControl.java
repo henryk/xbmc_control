@@ -26,10 +26,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	
 	public RemoteControl(String name) {
 		super(name);
-		HttpApi api = getApi();
-		if(api != null) {
-			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
-		}
+		setupListener();
 	}
 
 	protected Displayable constructDisplayable() {
@@ -85,20 +82,6 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		return api;
 	}
 	
-	private void pause() {
-		HttpApi api = getApi();
-		if(api != null) {
-			api.getStateMonitor().unregisterListener(this);
-		}
-	}
-	
-	private void unpause() {
-		HttpApi api = getApi();
-		if(api != null) {
-			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
-		}
-	}
-	
 	public void stateSynchronized() {
 		if(canvas == null)
 			constructDisplayable();
@@ -125,8 +108,16 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
+	private void setupListener() {
+		HttpApi api = getApi();
+		if(api != null) {
+			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
+		}
+	}
+
 	protected class RemoteControlCanvas extends GameCanvas implements Runnable {
 		private boolean sizeDirty = false;
+		private boolean shown = false;
 		
 		private Image thumb = null;
 		private String thumbUrl = null;
@@ -146,83 +137,88 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 		public void run() {
 			synchronized(this) {
-				System.out.println("Running");
-				if(thumbDirty || tvshowDirty || progressDirty || sizeDirty) {
-					int height = getHeight();
-					int width = getWidth();
-					Graphics g = getGraphics();
-					drawBackground(width, height);
-					
-					if(thumbDirty || sizeDirty) {
-						thumb = null;
-						try {
-							thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
-						} catch (IllegalArgumentException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						
-						if(thumb != null) {
-							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+				if(shown) {
+					System.out.println("Running");
+					if(thumbDirty || tvshowDirty || progressDirty || sizeDirty) {
+						int height = getHeight();
+						int width = getWidth();
+						Graphics g = getGraphics();
+						drawBackground(width, height);
 
-						}
-					}
-					
-					if(thumb != null) {
-						g.drawImage(thumb, 10, height-20, Graphics.BOTTOM | Graphics.LEFT);
-					}
-					
-					if(tvshowDirty || sizeDirty) {
-						tvshowThumb = null;
-						HttpApi api = getApi();
-						if(api != null && tvshowTitle != null) {
+						if(thumbDirty || sizeDirty) {
+							thumb = null;
 							try {
-								RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+tvshowTitle+"' LIMIT 1");
-								String data[] = new String[]{};
-								if(conn.hasMoreElements())
-									data = (String[]) conn.nextElement();
-								if(data.length > 0) {
-									String crc = Utils.crc32(data[0]);
-									tvshowThumb = ImageFactory.getRemoteImage(api, "special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
-								}
-
-								if(tvshowThumb != null) {
-									tvshowThumb = ImageFactory.scaleImageToFit(tvshowThumb,
-											width-20, (int)(height*0.3));
-								}
-
-							} catch (Exception e) {
+								thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
+							} catch (IllegalArgumentException e) {
+								e.printStackTrace();
+							} catch (IOException e) {
 								e.printStackTrace();
 							}
+
+							if(thumb != null) {
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+
+							}
 						}
-					}
-					
-					if(tvshowThumb != null) {
-						g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
-					}
-					
-					if(progressDirty || sizeDirty) {
-						int barWidth = 0;
-						int maxWidth = width - 20;
-						if(progress > 100)
-							progress = 100;
-						if(progress < -1)
-							progress = -1;
-						if(progress != -1) {
-							barWidth = (maxWidth * progress) / 100;
+
+						if(thumb != null) {
+							g.drawImage(thumb, 10, height-20, Graphics.BOTTOM | Graphics.LEFT);
 						}
-						
-						g.setColor(0, 0, 0);
-						g.fillRoundRect(11, height-19, maxWidth, 8, 8, 8);
-						g.setColor(160, 160, 160);
-						g.fillRoundRect(11, height-19, barWidth, 8, 8, 8);
+
+						if(tvshowDirty || sizeDirty) {
+							tvshowThumb = null;
+							HttpApi api = getApi();
+							if(api != null && tvshowTitle != null) {
+								try {
+									RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+tvshowTitle+"' LIMIT 1");
+									String data[] = new String[]{};
+									if(conn.hasMoreElements())
+										data = (String[]) conn.nextElement();
+									if(data.length > 0) {
+										String crc = Utils.crc32(data[0]);
+										tvshowThumb = ImageFactory.getRemoteImage(api, "special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
+									}
+
+									if(tvshowThumb != null) {
+										tvshowThumb = ImageFactory.scaleImageToFit(tvshowThumb,
+												width-20, (int)(height*0.3));
+									}
+
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+
+						if(tvshowThumb != null) {
+							g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
+						}
+
+						if(progressDirty || sizeDirty) {
+							int barWidth = 0;
+							int maxWidth = width - 20;
+							if(progress > 100)
+								progress = 100;
+							if(progress < -1)
+								progress = -1;
+							if(progress != -1) {
+								barWidth = (maxWidth * progress) / 100;
+							}
+
+							g.setColor(0, 0, 0);
+							g.fillRoundRect(11, height-19, maxWidth, 8, 8, 8);
+							g.setColor(160, 160, 160);
+							g.fillRoundRect(11, height-19, barWidth, 8, 8, 8);
+						}
+
+						sizeDirty = tvshowDirty = thumbDirty = progressDirty = false;
+						flushGraphics();
 					}
-					
-					sizeDirty = tvshowDirty = thumbDirty = progressDirty = false;
-					flushGraphics();
+					System.out.println("Done");
+				} else {
+					System.out.println("Invisible");
 				}
-				System.out.println("Done");
+
 			}
 		}
 		
@@ -291,14 +287,18 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 		protected void hideNotify() {
 			System.out.println("hideNotify");
-			pause();
-			super.hideNotify();
+			synchronized(this) {
+				shown = false;
+			}
 		}
 		
 		protected void showNotify() {
 			System.out.println("showNotify");
-			unpause();
-			super.hideNotify();
+			setupListener();
+			synchronized(this) {
+				shown = true;
+			}
+			refresh();
 		}
 		
 		private void actOnKey(int keyCode) {
