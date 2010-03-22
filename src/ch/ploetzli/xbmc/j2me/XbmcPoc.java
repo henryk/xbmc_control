@@ -6,6 +6,7 @@ import javax.microedition.lcdui.*;
 import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
+import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
@@ -116,11 +117,11 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 					
 					this.seriesList.append(img);
 				} else if(o instanceof Exception) {
-					((Exception)o).printStackTrace();
+					Logger.getLogger().error((Exception)o);
 				}
 			}
 		} catch (IOException e) {
-			e.printStackTrace();
+			Logger.getLogger().error(e);
 			this.seriesList.append(e.toString());
 		}
 	}

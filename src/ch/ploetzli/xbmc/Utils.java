@@ -9,7 +9,7 @@ public class Utils {
 	{
 		int i;
 		for(i=0; i<array.length; i++) 
-			System.err.println(array[i]);
+			Logger.getLogger().info(array[i]);
 	}
 	
 	public static String URIEscape(String input)

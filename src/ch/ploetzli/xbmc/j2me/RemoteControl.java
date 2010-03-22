@@ -10,6 +10,7 @@ import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.GameCanvas;
 
+import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
@@ -64,7 +65,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				try {
 					api.sendKey(buttoncode);
 				} catch (IOException e) {
-					e.printStackTrace();
+					Logger.getLogger().error(e);
 				}
 			}
 			public void start(HttpApi api, int buttoncode) {
@@ -187,7 +188,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						}
 						dirty = false;
 					} catch (Exception e) {
-						e.printStackTrace();
+						Logger.getLogger().error(e);
 					}
 				} else if(value == null) {
 					dirty = false;
@@ -215,13 +216,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				thumb = null;
 				if(api != null && value != null) {
 					try {
-						try {
-							thumb = ImageFactory.getRemoteImage(api, value);
-						} catch (IllegalArgumentException e) {
-							e.printStackTrace();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
+						thumb = ImageFactory.getRemoteImage(api, value);
 
 						if(thumb != null) {
 							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
@@ -229,7 +224,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						}
 						dirty = false;
 					} catch (Exception e) {
-						e.printStackTrace();
+						Logger.getLogger().error(e);
 					}
 				} else if(value == null) {
 					dirty = false;

@@ -8,6 +8,8 @@ import javax.microedition.io.Datagram;
 import javax.microedition.io.DatagramConnection;
 import javax.microedition.io.Connector;
 
+import ch.ploetzli.xbmc.Logger;
+
 public class BroadcastMonitor extends Thread
 {
 	private DatagramConnection conn = null;
@@ -29,7 +31,7 @@ public class BroadcastMonitor extends Thread
 			if(port != -1)
 				conn = (DatagramConnection)Connector.open("datagram://:"+port);
 		} catch (IOException e) {
-			e.printStackTrace();
+			Logger.getLogger().error(e);
 		}
 		if(conn == null)
 			return;
@@ -46,14 +48,14 @@ public class BroadcastMonitor extends Thread
 			}
 		} catch(Exception e) { /* Must be a class that includes InterruptedException and not only IOException */
 			/* Ignore and exit */
-			e.printStackTrace();
+			Logger.getLogger().error(e);
 		}
 	}
 	
 	protected void processMessage(Datagram d)
 	{
 		String data = new String(d.getData(), 0, d.getLength());
-		System.out.println("Broadcast received from "+ d.getAddress() +": " + data);
+		Logger.getLogger().info("Broadcast received from "+ d.getAddress() +": " + data);
 		
 		int start = data.indexOf("<b>");
 		int stop = data.indexOf("</b>");
@@ -94,7 +96,7 @@ public class BroadcastMonitor extends Thread
 		for(Enumeration e = listeners.keys(); e.hasMoreElements(); ) {
 			Object key = e.nextElement();
 			if(!listeners.containsKey(key)) {
-				System.err.println("BUG: "+key.hashCode()+" is not in the Hashtable");
+				Logger.getLogger().error("BUG: "+key.hashCode()+" is not in the Hashtable");
 				continue;
 			}
 			Object val = listeners.get(key);
@@ -120,8 +122,7 @@ public class BroadcastMonitor extends Thread
 			}
 		} catch(IOException e) {
 			/* Ignore, but return -1 to signify failure */
-			System.err.println(e);
-			e.printStackTrace();
+			Logger.getLogger().info(e);
 		}
 		return -1;
 	}

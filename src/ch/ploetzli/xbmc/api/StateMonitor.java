@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
+import ch.ploetzli.xbmc.Logger;
+
 /**
  * There is no notification of playback progress, so this thread
  * will periodically poll the status.
@@ -55,7 +57,7 @@ public class StateMonitor extends Thread implements BroadcastListener {
 						pollStatus();
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				Logger.getLogger().info(e);
 			}
 		}
 	}
@@ -65,7 +67,7 @@ public class StateMonitor extends Thread implements BroadcastListener {
 		try {
 			status = api.getCurrentlyPlaying(true);
 		} catch (IOException e) {
-			e.printStackTrace();
+			Logger.getLogger().info(e);
 		}
 		
 		String oldKeys[] = new String[properties.size()];

@@ -6,6 +6,8 @@ import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.List;
 
+import ch.ploetzli.xbmc.Logger;
+
 public class SubMenu implements CommandListener {
 	protected Display display = null;
 	protected SubMenu parent = null;

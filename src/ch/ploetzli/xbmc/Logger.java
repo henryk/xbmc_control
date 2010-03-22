@@ -1,4 +1,4 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc;
 
 public class Logger {
 	private static Logger logger;

@@ -9,6 +9,7 @@ import javax.microedition.lcdui.List;
 import javax.microedition.lcdui.Ticker;
 
 import ch.ploetzli.xbmc.LRUHashtable;
+import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
@@ -215,7 +216,7 @@ public class DatabaseView extends DatabaseSubMenu {
 					}
 				}
 			} catch(Exception e) {
-				e.printStackTrace();
+				Logger.getLogger().info(e);
 				/* Ignore and end thread */
 			} finally {
 				refreshFinished();

@@ -9,6 +9,8 @@ import javax.microedition.io.Connector;
 import javax.microedition.io.Datagram;
 import javax.microedition.io.DatagramConnection;
 
+import ch.ploetzli.xbmc.Logger;
+
 /* This is a hacked together mDNS resolver that will look specifically for the XBMC web interface.
  * Since J2ME has no explicit multicast support we will use the defined legacy procedure: Send the
  * request from a port that is not 5353, so that the responders will fall back to unicast responses
@@ -160,7 +162,7 @@ public class MdnsDiscoverer {
 					}
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
+				Logger.getLogger().error(e);
 			}
 
 		}

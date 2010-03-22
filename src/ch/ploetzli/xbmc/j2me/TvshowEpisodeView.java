@@ -2,6 +2,8 @@ package ch.ploetzli.xbmc.j2me;
 
 import javax.microedition.lcdui.Image;
 
+import ch.ploetzli.xbmc.Logger;
+
 public class TvshowEpisodeView extends DatabaseView {
 	
 	public static DatabaseView get(String name, String idShow) {
@@ -21,7 +23,7 @@ public class TvshowEpisodeView extends DatabaseView {
 					img = ImageFactory.getResourceImage(ImageFactory.ICON_FULL);
 			} catch(Exception e) {
 				/* Ignore, but set no image */
-				e.printStackTrace();
+				Logger.getLogger().info(e);
 			}
 		}
 		return new Object[]{label, img};
