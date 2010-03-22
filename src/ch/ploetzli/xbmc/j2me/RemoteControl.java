@@ -162,7 +162,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						}
 
 						if(thumb != null) {
-							g.drawImage(thumb, 10, height-20, Graphics.BOTTOM | Graphics.LEFT);
+							g.drawImage(thumb, 10, height-25, Graphics.BOTTOM | Graphics.LEFT);
 						}
 
 						if(tvshowDirty || sizeDirty) {
@@ -191,7 +191,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						}
 
 						if(tvshowThumb != null) {
-							g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
+							g.drawImage(tvshowThumb, width/2, 10, Graphics.TOP | Graphics.HCENTER);
 						}
 
 						if(progressDirty || sizeDirty) {
@@ -206,9 +206,9 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 							}
 
 							g.setColor(0, 0, 0);
-							g.fillRoundRect(11, height-19, maxWidth, 8, 8, 8);
+							g.fillRoundRect(10, height-20, maxWidth, 10, 10, 10);
 							g.setColor(160, 160, 160);
-							g.fillRoundRect(11, height-19, barWidth, 8, 8, 8);
+							g.fillRoundRect(10, height-20, barWidth, 10, 10, 10);
 						}
 
 						sizeDirty = tvshowDirty = thumbDirty = progressDirty = false;
