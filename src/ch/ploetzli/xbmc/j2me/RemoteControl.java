@@ -142,7 +142,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	protected abstract class IntegerGUIElement extends GUIElement {
-		int value;
+		int value = getDefaultValue();
 		
 		public boolean updateValue(String name, String newValue) {
 			if(!name.equals(getFieldName()))
