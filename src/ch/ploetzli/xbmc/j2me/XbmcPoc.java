@@ -146,18 +146,17 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		
 		topMenu = new DatabaseTopMenu(displayName, new SubMenu[]{
 				new RemoteControl("Remote"),
-				new SubMenu("Library", new SubMenu[]{
-						new SubMenu("Movies", new SubMenu[]{
-								MovieGenreView.get("Genre"),
-								MovieTitleView.get("Title"),
-								MovieYearView.get("Year"),
-						}),
-						new SubMenu("TV Shows", new SubMenu[]{
-								TvshowGenreView.get("Genre"),
-								TvshowTitleView.get("Title"),
-								TvshowYearView.get("Year"),
-						}),
+				new SubMenu("Movies", new SubMenu[]{
+						MovieGenreView.get("Genre"),
+						MovieTitleView.get("Title"),
+						MovieYearView.get("Year"),
 				}),
+				new SubMenu("TV Shows", new SubMenu[]{
+						TvshowGenreView.get("Genre"),
+						TvshowTitleView.get("Title"),
+						TvshowYearView.get("Year"),
+				}),
+				new DebugView("Debug"),
 		});
 		
 		topMenu.setApi(api);

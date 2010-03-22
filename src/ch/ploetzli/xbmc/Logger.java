@@ -13,12 +13,12 @@ public class Logger {
 		
 	}
 	
-	public void info(String s) {
+	public synchronized void info(String s) {
 		System.out.println(s);
 	}
 	
 	
-	public void error(String s) {
+	public synchronized void error(String s) {
 		System.err.println(s);
 	}
 
