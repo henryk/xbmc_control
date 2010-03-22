@@ -98,7 +98,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	{
 		if(api == null)
 			return;
-		System.out.println("Good boy");
+		Logger.getLogger().info("Good boy");
 		try {
 			RecordSetConnection conn = api.queryVideoDatabase("select strPath,c00 from tvshowview order by c00");
 			while(conn.hasMoreElements()) {
@@ -108,7 +108,7 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 					String name = ((String[])o)[1];
 					String crc = Utils.crc32(path);
 					
-					System.out.println(Utils.crc32(path) + " " + name);
+					Logger.getLogger().info(Utils.crc32(path) + " " + name);
 					
 					byte imageData[] = api.fileDownload("special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
 					Image img = Image.createImage(imageData, 0, imageData.length);

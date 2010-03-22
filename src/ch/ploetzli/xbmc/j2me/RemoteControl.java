@@ -294,7 +294,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void run() {
 			synchronized(this) {
 				if(shown) {
-					System.out.println("Running");
+					Logger.getLogger().info("Running");
 					if(dirty) {
 						dirty = false;
 						int height = getHeight();
@@ -313,16 +313,16 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 						flushGraphics();
 					}
-					System.out.println("Done");
+					Logger.getLogger().info("Done");
 				} else {
-					System.out.println("Invisible");
+					Logger.getLogger().info("Invisible");
 				}
 
 			}
 		}
 		
 		public void refresh() {
-			System.out.println("Refreshing");
+			Logger.getLogger().info("Refreshing");
 			new Thread(this).start();
 		}
 		
@@ -350,7 +350,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		protected void sizeChanged(int w, int h) {
-			System.out.println("sizeChanged");
+			Logger.getLogger().info("sizeChanged");
 			synchronized(this) {
 				for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
 					GUIElement element = (GUIElement) e.nextElement();
@@ -363,14 +363,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		protected void hideNotify() {
-			System.out.println("hideNotify");
+			Logger.getLogger().info("hideNotify");
 			synchronized(this) {
 				shown = false;
 			}
 		}
 		
 		protected void showNotify() {
-			System.out.println("showNotify");
+			Logger.getLogger().info("showNotify");
 			setupListener();
 			synchronized(this) {
 				shown = true;
@@ -403,16 +403,16 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		protected void keyPressed(int keyCode) {
-			System.out.println("Pressed: " + getKeyName(keyCode));
+			Logger.getLogger().info("Pressed: " + getKeyName(keyCode));
 			super.keyPressed(keyCode);
 		}
 		protected void keyReleased(int keyCode) {
-			System.out.println("Released: " + getKeyName(keyCode));
+			Logger.getLogger().info("Released: " + getKeyName(keyCode));
 			actOnKey(keyCode);
 			super.keyReleased(keyCode);
 		}
 		protected void keyRepeated(int keyCode) {
-			System.out.println("Repeated: " + getKeyName(keyCode));
+			Logger.getLogger().info("Repeated: " + getKeyName(keyCode));
 			actOnKey(keyCode);
 			super.keyRepeated(keyCode);
 		}

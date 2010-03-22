@@ -255,7 +255,7 @@ public class DatabaseView extends DatabaseSubMenu {
 
 	protected String constructQuery() {
 		String result = constructQuery(this.keyColumn, this.dataColumns, this.table, this.orderClause, this.groupClause, this.whereClause);
-		System.err.println(result);
+		Logger.getLogger().info(result);
 		return result;
 	}
 	
@@ -318,7 +318,7 @@ public class DatabaseView extends DatabaseSubMenu {
 			 * grow with each record, so hitting this alternative means that i has incremented
 			 * by 2 between calls.
 			 */
-			System.err.println("BUG: haveRecord("+i+"), but only "+cache.size()+" objects in cache");
+			Logger.getLogger().error("BUG: haveRecord("+i+"), but only "+cache.size()+" objects in cache");
 		}
 		
 	}
@@ -332,7 +332,7 @@ public class DatabaseView extends DatabaseSubMenu {
 		if(cache.size() == len) {
 			/* Nothing to do */
 		} else if(cache.size() < len) {
-			System.err.println("BUG: haveRecordCount("+len+"), but only "+cache.size()+" objects in cache");
+			Logger.getLogger().error("BUG: haveRecordCount("+len+"), but only "+cache.size()+" objects in cache");
 		} else while(cache.size() > len) {
 			removeRow(cache.size()-1);
 			cache.removeElementAt(cache.size()-1);

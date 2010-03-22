@@ -162,7 +162,7 @@ public class SubMenu implements CommandListener {
 			if(index >= 0 && index < subMenus.length)
 				show(subMenus[index]);
 		} else {
-			System.err.println("No submenus");
+			Logger.getLogger().error("No submenus");
 		}
 	}
 	
@@ -179,7 +179,7 @@ public class SubMenu implements CommandListener {
 			menu.refresh();
 			d.setCurrent(menu.getDisplayable());
 		} else {
-			System.err.println("Can't show "+menu.name+" without a Display");
+			Logger.getLogger().error("Can't show "+menu.name+" without a Display");
 		}
 	}
 }
