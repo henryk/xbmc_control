@@ -170,6 +170,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 		public void fetch(HttpApi api, int width, int height) {
 			if(dirty) {
+				thumb = null;
 				if(api != null && value != null) {
 					try {
 						RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+value+"' LIMIT 1");
@@ -184,12 +185,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						if(thumb != null) {
 							thumb = ImageFactory.scaleImageToFit(thumb,	width-20, (int)(height*0.3));
 						}
+						dirty = false;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+				} else if(value == null) {
+					dirty = false;
 				}
 			}
-			dirty = false;
 		}
 
 		public void paint(Graphics g, int width, int height) {
@@ -209,9 +212,9 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 		public void fetch(HttpApi api, int width, int height) {
 			if(dirty) {
+				thumb = null;
 				if(api != null && value != null) {
 					try {
-						thumb = null;
 						try {
 							thumb = ImageFactory.getRemoteImage(api, value);
 						} catch (IllegalArgumentException e) {
@@ -224,12 +227,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
 
 						}
+						dirty = false;
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
+				} else if(value == null) {
+					dirty = false;
 				}
 			}
-			dirty = false;
 		}
 
 		public void paint(Graphics g, int width, int height) {
@@ -263,12 +268,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				value = -1;
 			if(value != -1) {
 				barWidth = (maxWidth * value) / 100;
+				g.setColor(0, 0, 0);
+				g.fillRoundRect(10, height-20, maxWidth, 10, 10, 10);
+				g.setColor(160, 160, 160);
+				g.fillRoundRect(10, height-20, barWidth, 10, 10, 10);
 			}
-
-			g.setColor(0, 0, 0);
-			g.fillRoundRect(10, height-20, maxWidth, 10, 10, 10);
-			g.setColor(160, 160, 160);
-			g.fillRoundRect(10, height-20, barWidth, 10, 10, 10);
 		}
 		
 	}
