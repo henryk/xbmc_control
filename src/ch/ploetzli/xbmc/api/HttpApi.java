@@ -33,7 +33,8 @@ public class HttpApi {
 
 	protected HttpConnection openCommandConnection(String cmd) throws IOException
 	{
-		HttpConnection conn = (HttpConnection)Connector.open(baseurl + "?command=" + Utils.URIEscape(cmd));
+		String url = baseurl + "?command=" + Utils.URIEscape(cmd);
+		HttpConnection conn = (HttpConnection)Connector.open(url);
 		
 		int rc = conn.getResponseCode();
 		if (rc != HttpConnection.HTTP_OK) {
@@ -174,6 +175,26 @@ public class HttpApi {
 
 	public String[] getCurrentlyPlaying(boolean extended) throws IOException {
 		return simpleCommand("GetCurrentlyPlaying(,,,"+extended+",)", true);
+	}
+
+	public void addToPlayListFromDB(String type, String whereClause) throws IOException {
+		simpleCommand("AddToPlayListFromDB("+type+";"+whereClause+")");
+	}
+
+	public void clearPlayList(int i) throws IOException {
+		simpleCommand("ClearPlayList("+i+")");
+	}
+
+	public void setCurrentPlayList(int i) throws IOException {
+		simpleCommand("SetCurrentPlayList("+i+")");
+	}
+
+	public void playNext() throws IOException {
+		simpleCommand("PlayNext()");
+	}
+
+	public void addToPlayList(String filePath) throws IOException {
+		simpleCommand("AddToPlayList("+filePath+")");
 	}
 
 }
