@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
+import javax.microedition.lcdui.Font;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
 import javax.microedition.lcdui.game.GameCanvas;
@@ -292,6 +293,26 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 	}
 	
+	protected class TitleLabel extends StringGUIElement {
+
+		public String getFieldName() {
+			return "Title";
+		}
+
+		public void fetch(HttpApi api, int width, int height) {
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			if(value != null) {
+				g.setColor(160, 160, 180);
+				Font font = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_BOLD , Font.SIZE_MEDIUM);
+				g.setFont(font);
+				g.drawString(value, (int)(10+width*0.4+3), (int) (height*0.3+10), Graphics.LEFT | Graphics.TOP);
+			}
+		}
+		
+	}
+	
 	protected class RemoteControlCanvas extends GameCanvas implements Runnable {
 		private boolean dirty = false;
 		private boolean shown = false;
@@ -304,6 +325,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			guiElements.addElement(new TvshowThumb());
 			guiElements.addElement(new FileThumb());
 			guiElements.addElement(new PlaybackProgress());
+			guiElements.addElement(new TitleLabel());
 		}
 		
 		public void run() {
