@@ -25,4 +25,9 @@ public class Logger {
 	public void info(Exception e) { info(e.toString()); }
 	public void error(Exception e) { error(e.toString()); }
 
+	public static synchronized void overrideLogger(Logger l) {
+		if(l != null) {
+			logger = l;
+		}
+	}
 }

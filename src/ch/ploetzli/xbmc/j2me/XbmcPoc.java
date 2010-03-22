@@ -28,6 +28,8 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 	private Hashtable devices;
 	
 	public XbmcPoc() {
+		Logger.overrideLogger(new MidletLogger(this));
+		
 		this.display = Display.getDisplay(this);
 		this.deviceList = new List("Select Device", List.IMPLICIT);
 		this.deviceList.setCommandListener(this);
