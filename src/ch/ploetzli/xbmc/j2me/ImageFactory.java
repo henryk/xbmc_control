@@ -98,4 +98,25 @@ public class ImageFactory {
 	{
 		return scaleImage(original, newWidth, (newWidth*original.getHeight())/original.getWidth());
 	}
+	
+	public static Image scaleImageToFit(Image img, int maxWidth, int maxHeight)
+	{
+		int newHeight = img.getHeight(), newWidth = img.getWidth();
+		
+		if( maxWidth < newWidth ) {
+			newWidth = maxWidth;
+			newHeight = (img.getHeight()*newWidth) / img.getWidth();
+		}
+		
+		if( maxHeight < newHeight ) {
+			newHeight = maxHeight;
+			newWidth = (img.getWidth()*newHeight) / img.getHeight();
+		}
+		
+		if( newHeight != img.getHeight() || newWidth != img.getWidth() ) {
+			img = ImageFactory.scaleImage(img, newWidth, newHeight);
+		}
+		
+		return img;
+	}
 }

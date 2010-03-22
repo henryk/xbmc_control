@@ -142,21 +142,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						int height = getHeight();
 						int width = getWidth();
 						
-						int newHeight = thumb.getHeight(), newWidth = thumb.getWidth();
-						
-						if( ( width*0.4 ) < newWidth ) {
-							newWidth = (int)(width*0.4);
-							newHeight = (thumb.getHeight()*newWidth) / thumb.getWidth();
-						}
-						
-						if( ( height*0.5 ) < newHeight ) {
-							newHeight = (int)(height*0.5);
-							newWidth = (thumb.getWidth()*newHeight) / thumb.getHeight();
-						}
-						
-						if( newHeight != thumb.getHeight() || newWidth != thumb.getWidth() ) {
-							thumb = ImageFactory.scaleImage(thumb, newWidth, newHeight);
-						}
+						thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
 						
 						g.drawImage(thumb, 10, height-10, Graphics.BOTTOM | Graphics.LEFT);
 					}
