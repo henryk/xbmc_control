@@ -127,6 +127,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			synchronized(this) {
 				if(thumbDirty) {
 					drawBackground(getWidth(), getHeight());
+					
 					thumb = null;
 					try {
 						thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
@@ -139,7 +140,25 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					if(thumb != null) {
 						Graphics g = getGraphics();
 						int height = getHeight();
-						g.drawImage(thumb, 20, height-20, Graphics.BOTTOM | Graphics.LEFT);
+						int width = getWidth();
+						
+						int newHeight = thumb.getHeight(), newWidth = thumb.getWidth();
+						
+						if( ( width*0.4 ) < newWidth ) {
+							newWidth = (int)(width*0.4);
+							newHeight = (thumb.getHeight()*newWidth) / thumb.getWidth();
+						}
+						
+						if( ( height*0.5 ) < newHeight ) {
+							newHeight = (int)(height*0.5);
+							newWidth = (thumb.getWidth()*newHeight) / thumb.getHeight();
+						}
+						
+						if( newHeight != thumb.getHeight() || newWidth != thumb.getWidth() ) {
+							thumb = ImageFactory.scaleImage(thumb, newWidth, newHeight);
+						}
+						
+						g.drawImage(thumb, 10, height-10, Graphics.BOTTOM | Graphics.LEFT);
 					}
 
 					flushGraphics();
