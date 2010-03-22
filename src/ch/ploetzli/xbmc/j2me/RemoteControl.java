@@ -1,6 +1,8 @@
 package ch.ploetzli.xbmc.j2me;
 
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.Vector;
 
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
@@ -90,22 +92,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 
 	public void valueChanged(String property, String newValue) {
-		if(property.equals("Percentage")) {
-			if(canvas == null)
-				constructDisplayable();
-			if(canvas != null)
-				canvas.setProgress(newValue);
-		} else if(property.equals("Thumb")) {
-			if(canvas == null)
-				constructDisplayable();
-			if(canvas != null)
-				canvas.setThumbUrl(newValue);
-		} else if(property.equals("Show Title")) {
-			if(canvas == null)
-				constructDisplayable();
-			if(canvas != null)
-				canvas.setTvshowTitle(newValue);
-		}
+		if(canvas == null)
+			constructDisplayable();
+		if(canvas != null)
+			canvas.setValue(property, newValue);
 	}
 	
 	private void setupListener() {
@@ -114,104 +104,209 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
 		}
 	}
+	
+	protected abstract class GUIElement {
+		protected boolean dirty = false;
+		public abstract boolean updateValue(String name, String value);
+		public abstract void fetch(HttpApi api, int width, int height);
+		public abstract void paint(Graphics g, int width, int height);
+		public void setDirty() {
+			dirty = true;
+		}
+		public boolean getDirty() {
+			return dirty;
+		}
+		public boolean sizeChanged(int width, int height) {
+			setDirty();
+			return getDirty();
+		}
+	}
+	
+	protected abstract class StringGUIElement extends GUIElement {
+		String value;
+		
+		public boolean updateValue(String name, String newValue) {
+			if(!name.equals(getFieldName()))
+				return dirty;
+			if( value == null && newValue == null)
+				return dirty; /* Nothing to do */
+			else if( value != null || newValue != null || !value.equals(newValue)) { 
+				value = newValue;
+				dirty = true;
+			}
+			return dirty;
+		}
+		
+		public abstract String getFieldName();
+	}
+	
+	protected abstract class IntegerGUIElement extends GUIElement {
+		int value;
+		
+		public boolean updateValue(String name, String newValue) {
+			if(!name.equals(getFieldName()))
+				return dirty;
+			int newVal = getDefaultValue();
+			try {
+				newVal = Integer.parseInt(newValue);
+			} catch(Exception e) {;}
+			if(value != newVal) {
+				value = newVal;
+				dirty = true;
+			}
+			return dirty;
+		}
+		
+		public abstract int getDefaultValue();
+		public abstract String getFieldName();
+	}
+	
+	protected class TvshowThumb extends StringGUIElement {
+		Image thumb = null;
+		
+		public String getFieldName() {
+			return "Show Title";
+		}
 
+		public void fetch(HttpApi api, int width, int height) {
+			if(dirty) {
+				if(api != null && value != null) {
+					try {
+						RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+value+"' LIMIT 1");
+						String data[] = new String[]{};
+						if(conn.hasMoreElements())
+							data = (String[]) conn.nextElement();
+						if(data.length > 0) {
+							String crc = Utils.crc32(data[0]);
+							thumb = ImageFactory.getRemoteImage(api, "special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
+						}
+
+						if(thumb != null) {
+							thumb = ImageFactory.scaleImageToFit(thumb,	width-20, (int)(height*0.3));
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			dirty = false;
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			if(thumb != null) {
+				g.drawImage(thumb, width/2, 10, Graphics.TOP | Graphics.HCENTER);
+			}
+		}
+		
+	}
+
+	protected class FileThumb extends StringGUIElement {
+		Image thumb = null;
+		
+		public String getFieldName() {
+			return "Thumb";
+		}
+
+		public void fetch(HttpApi api, int width, int height) {
+			if(dirty) {
+				if(api != null && value != null) {
+					try {
+						thumb = null;
+						try {
+							thumb = ImageFactory.getRemoteImage(api, value);
+						} catch (IllegalArgumentException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+
+						if(thumb != null) {
+							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			dirty = false;
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			if(thumb != null) {
+				g.drawImage(thumb, 10, height-25, Graphics.BOTTOM | Graphics.LEFT);
+			}
+		}
+		
+	}
+	
+	protected class PlaybackProgress extends IntegerGUIElement {
+
+		public int getDefaultValue() {
+			return -1;
+		}
+
+		public String getFieldName() {
+			return "Percentage";
+		}
+
+		public void fetch(HttpApi api, int width, int height) {
+			return;
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			int barWidth = 0;
+			int maxWidth = width - 20;
+			if(value > 100)
+				value = 100;
+			if(value < -1)
+				value = -1;
+			if(value != -1) {
+				barWidth = (maxWidth * value) / 100;
+			}
+
+			g.setColor(0, 0, 0);
+			g.fillRoundRect(10, height-20, maxWidth, 10, 10, 10);
+			g.setColor(160, 160, 160);
+			g.fillRoundRect(10, height-20, barWidth, 10, 10, 10);
+		}
+		
+	}
+	
 	protected class RemoteControlCanvas extends GameCanvas implements Runnable {
-		private boolean sizeDirty = false;
+		private boolean dirty = false;
 		private boolean shown = false;
+		private Vector guiElements;
 		
-		private Image thumb = null;
-		private String thumbUrl = null;
-		private boolean thumbDirty = false;
-		
-		private Image tvshowThumb = null;
-		private String tvshowTitle = null;
-		private boolean tvshowDirty = false;
-		
-		private int progress = -1;
-		private boolean progressDirty = false;
-
 		protected RemoteControlCanvas(String name) {
 			super(false);
 			setTitle(name);
+			guiElements = new Vector();
+			guiElements.addElement(new TvshowThumb());
+			guiElements.addElement(new FileThumb());
+			guiElements.addElement(new PlaybackProgress());
 		}
 		
 		public void run() {
 			synchronized(this) {
 				if(shown) {
 					System.out.println("Running");
-					if(thumbDirty || tvshowDirty || progressDirty || sizeDirty) {
+					if(dirty) {
+						dirty = false;
 						int height = getHeight();
 						int width = getWidth();
 						Graphics g = getGraphics();
+						HttpApi api = getApi();
+						
 						drawBackground(width, height);
-
-						if(thumbDirty || sizeDirty) {
-							thumb = null;
-							try {
-								thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
-							} catch (IllegalArgumentException e) {
-								e.printStackTrace();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-
-							if(thumb != null) {
-								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
-
-							}
+						
+						for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+							GUIElement element = (GUIElement) e.nextElement();
+							element.fetch(api, width, height);
+							element.paint(g, width, height);
+							dirty = dirty || element.getDirty();
 						}
 
-						if(thumb != null) {
-							g.drawImage(thumb, 10, height-25, Graphics.BOTTOM | Graphics.LEFT);
-						}
-
-						if(tvshowDirty || sizeDirty) {
-							tvshowThumb = null;
-							HttpApi api = getApi();
-							if(api != null && tvshowTitle != null) {
-								try {
-									RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+tvshowTitle+"' LIMIT 1");
-									String data[] = new String[]{};
-									if(conn.hasMoreElements())
-										data = (String[]) conn.nextElement();
-									if(data.length > 0) {
-										String crc = Utils.crc32(data[0]);
-										tvshowThumb = ImageFactory.getRemoteImage(api, "special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
-									}
-
-									if(tvshowThumb != null) {
-										tvshowThumb = ImageFactory.scaleImageToFit(tvshowThumb,
-												width-20, (int)(height*0.3));
-									}
-
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
-							}
-						}
-
-						if(tvshowThumb != null) {
-							g.drawImage(tvshowThumb, width/2, 10, Graphics.TOP | Graphics.HCENTER);
-						}
-
-						if(progressDirty || sizeDirty) {
-							int barWidth = 0;
-							int maxWidth = width - 20;
-							if(progress > 100)
-								progress = 100;
-							if(progress < -1)
-								progress = -1;
-							if(progress != -1) {
-								barWidth = (maxWidth * progress) / 100;
-							}
-
-							g.setColor(0, 0, 0);
-							g.fillRoundRect(10, height-20, maxWidth, 10, 10, 10);
-							g.setColor(160, 160, 160);
-							g.fillRoundRect(10, height-20, barWidth, 10, 10, 10);
-						}
-
-						sizeDirty = tvshowDirty = thumbDirty = progressDirty = false;
 						flushGraphics();
 					}
 					System.out.println("Done");
@@ -227,39 +322,13 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			new Thread(this).start();
 		}
 		
-		public synchronized void setThumbUrl(String newValue) {
-			if( thumbUrl == null && newValue == null)
-				return; /* Nothing to do */
-			else if( thumbUrl != null || newValue != null || !thumbUrl.equals(newValue)) { 
-				System.out.println("Thumb dirty");
-				thumbUrl = newValue;
-				thumbDirty = true;
+		public synchronized void setValue(String name, String newValue) {
+			for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+				GUIElement element = (GUIElement) e.nextElement();
+				dirty = element.updateValue(name, newValue) || dirty;
 			}
 		}
-
-		public synchronized void setTvshowTitle(String newValue) {
-			if( tvshowTitle == null && newValue == null)
-				return; /* Nothing to do */
-			else if( tvshowTitle != null || newValue != null || !tvshowTitle.equals(newValue)) {
-				System.out.println("Show dirty");
-				tvshowTitle = newValue;
-				tvshowDirty = true;
-			}
-		}
-
-		public synchronized void setProgress(String newValue) {
-			int newVal = -1;
-			try {
-				newVal = Integer.parseInt(newValue);
-			} catch(Exception e) {;}
-			
-			if( progress != newVal ) {
-				System.out.println("Progress dirty");
-				progress = newVal;
-				progressDirty = true;
-			}
-		}
-
+		
 		private void drawBackground(int w, int h) {
 			Graphics g = getGraphics();
 			g.setClip(0, 0, w, h);
@@ -279,7 +348,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		protected void sizeChanged(int w, int h) {
 			System.out.println("sizeChanged");
 			synchronized(this) {
-				sizeDirty = true;
+				for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+					GUIElement element = (GUIElement) e.nextElement();
+					element.sizeChanged(w, h);
+				}
+				dirty = true;
 			}
 			super.sizeChanged(w, h);
 			refresh();
