@@ -108,7 +108,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	public void valueChanged(String property, String newValue) {
 		if(property.equals("Percentage")) {
-			System.out.println("Play progress: " + newValue);
+			if(canvas == null)
+				constructDisplayable();
+			if(canvas != null)
+				canvas.setProgress(newValue);
 		} else if(property.equals("Thumb")) {
 			if(canvas == null)
 				constructDisplayable();
@@ -123,6 +126,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	protected class RemoteControlCanvas extends GameCanvas implements Runnable {
+		private boolean sizeDirty = false;
+		
 		private Image thumb = null;
 		private String thumbUrl = null;
 		private boolean thumbDirty = false;
@@ -130,6 +135,9 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		private Image tvshowThumb = null;
 		private String tvshowTitle = null;
 		private boolean tvshowDirty = false;
+		
+		private int progress = -1;
+		private boolean progressDirty = false;
 
 		protected RemoteControlCanvas(String name) {
 			super(false);
@@ -138,10 +146,12 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 		public void run() {
 			synchronized(this) {
-				if(thumbDirty || tvshowDirty) {
-					drawBackground(getWidth(), getHeight());
+				if(thumbDirty || tvshowDirty || progressDirty || sizeDirty) {
+					int height = getHeight();
+					int width = getWidth();
+					drawBackground(width, height);
 					
-					if(thumbDirty) {
+					if(thumbDirty || sizeDirty) {
 						thumb = null;
 						try {
 							thumb = ImageFactory.getRemoteImage(getApi(), thumbUrl);
@@ -150,19 +160,19 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-
+						
 						if(thumb != null) {
-							Graphics g = getGraphics();
-							int height = getHeight();
-							int width = getWidth();
-
 							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
 
-							g.drawImage(thumb, 10, height-10, Graphics.BOTTOM | Graphics.LEFT);
 						}
 					}
 					
-					if(tvshowDirty) {
+					if(thumb != null) {
+						Graphics g = getGraphics();
+						g.drawImage(thumb, 10, height-20, Graphics.BOTTOM | Graphics.LEFT);
+					}
+					
+					if(tvshowDirty || sizeDirty) {
 						tvshowThumb = null;
 						HttpApi api = getApi();
 						if(api != null && tvshowTitle != null) {
@@ -177,14 +187,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 								}
 
 								if(tvshowThumb != null) {
-									Graphics g = getGraphics();
-									int height = getHeight();
-									int width = getWidth();
-
 									tvshowThumb = ImageFactory.scaleImageToFit(tvshowThumb,
 											width-20, (int)(height*0.3));
-
-									g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
 								}
 
 							} catch (Exception e) {
@@ -193,7 +197,30 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						}
 					}
 					
-					tvshowDirty = thumbDirty = false;
+					if(tvshowThumb != null) {
+						Graphics g = getGraphics();
+						g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
+					}
+					
+					if(progressDirty || sizeDirty) {
+						int barWidth = 0;
+						int maxWidth = width - 20;
+						if(progress > 100)
+							progress = 100;
+						if(progress < -1)
+							progress = -1;
+						if(progress != -1) {
+							barWidth = (maxWidth * progress) / 100;
+						}
+						
+						Graphics g = getGraphics();
+						g.setColor(0, 0, 0);
+						g.fillRoundRect(11, height-19, maxWidth, 8, 8, 8);
+						g.setColor(160, 160, 160);
+						g.fillRoundRect(11, height-19, barWidth, 8, 8, 8);
+					}
+					
+					sizeDirty = tvshowDirty = thumbDirty = progressDirty = false;
 					flushGraphics();
 				}
 			}
@@ -223,6 +250,19 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			}
 		}
 
+		public synchronized void setProgress(String newValue) {
+			int newVal = -1;
+			try {
+				newVal = Integer.parseInt(newValue);
+			} catch(Exception e) {;}
+			
+			if( progress != newVal ) {
+				System.out.println("Progress dirty");
+				progress = newVal;
+				progressDirty = true;
+			}
+		}
+
 		private void drawBackground(int w, int h) {
 			Graphics g = getGraphics();
 			g.setClip(0, 0, w, h);
@@ -240,16 +280,22 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		protected void sizeChanged(int w, int h) {
+			System.out.println("sizeChanged");
+			synchronized(this) {
+				sizeDirty = true;
+			}
 			super.sizeChanged(w, h);
 			refresh();
 		}
 		
 		protected void hideNotify() {
+			System.out.println("hideNotify");
 			pause();
 			super.hideNotify();
 		}
 		
 		protected void showNotify() {
+			System.out.println("showNotify");
 			unpause();
 			super.hideNotify();
 		}

@@ -114,7 +114,7 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	}
 
 	private void valueChanged(String property, String value) {
-		System.out.println("Value changed "+property+" = "+value);
+		//System.out.println("Value changed "+property+" = "+value);
 		for(Enumeration e = listeners.keys(); e.hasMoreElements(); ) 
 			((StateListener)e.nextElement()).valueChanged(property, value);
 	}
