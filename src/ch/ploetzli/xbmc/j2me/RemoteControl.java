@@ -146,9 +146,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 		public void run() {
 			synchronized(this) {
+				System.out.println("Running");
 				if(thumbDirty || tvshowDirty || progressDirty || sizeDirty) {
 					int height = getHeight();
 					int width = getWidth();
+					Graphics g = getGraphics();
 					drawBackground(width, height);
 					
 					if(thumbDirty || sizeDirty) {
@@ -168,7 +170,6 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					}
 					
 					if(thumb != null) {
-						Graphics g = getGraphics();
 						g.drawImage(thumb, 10, height-20, Graphics.BOTTOM | Graphics.LEFT);
 					}
 					
@@ -198,7 +199,6 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					}
 					
 					if(tvshowThumb != null) {
-						Graphics g = getGraphics();
 						g.drawImage(tvshowThumb, 10, 10, Graphics.TOP | Graphics.LEFT);
 					}
 					
@@ -213,7 +213,6 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 							barWidth = (maxWidth * progress) / 100;
 						}
 						
-						Graphics g = getGraphics();
 						g.setColor(0, 0, 0);
 						g.fillRoundRect(11, height-19, maxWidth, 8, 8, 8);
 						g.setColor(160, 160, 160);
@@ -223,10 +222,12 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					sizeDirty = tvshowDirty = thumbDirty = progressDirty = false;
 					flushGraphics();
 				}
+				System.out.println("Done");
 			}
 		}
 		
 		public void refresh() {
+			System.out.println("Refreshing");
 			new Thread(this).start();
 		}
 		
