@@ -46,7 +46,7 @@ public class TvshowEpisodeView extends DatabaseView {
 		 * with a path of 43/1/1923 which are the idShow/Season/idEpisode respectively, and
 		 * then "ERROR: CDVDPlayer::OpenInputStream - error opening 43/1/1923" is logged on
 		 * the XBMC, clearly indicating that the player can not cope with this.
-		 * Instead, use addToPlayList() with strPath/strFileName from the database and hope
+		 * Instead, use addToPlayList() with strPath+strFileName from the database and hope
 		 * that things don't break too hard.
 		 */
 		new Thread(new Runnable() {
@@ -54,7 +54,10 @@ public class TvshowEpisodeView extends DatabaseView {
 				try {
 					//api.clearPlayList(1);
 					api.setCurrentPlayList(1);
-					api.addToPlayList(row[5]+"/"+row[6]);
+					if(!row[6].startsWith("stack://"))
+						api.addToPlayList(row[5]+row[6]);
+					else
+						api.addToPlayList(row[6]);
 					api.playNext();
 				} catch (Exception e) {
 					Logger.getLogger().error(e);

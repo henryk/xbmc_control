@@ -32,7 +32,10 @@ public class MovieTitleView extends DatabaseView {
 				try {
 					/* See TvshowEpisodeView.select for a rant on why the path */
 					api.setCurrentPlayList(1);
-					api.addToPlayList(row[2]+"/"+row[3]);
+					if(!row[3].startsWith("stack://"))
+						api.addToPlayList(row[2]+row[3]);
+					else
+						api.addToPlayList(row[3]);
 					api.playNext();
 				} catch (IOException e) {;}
 			}
