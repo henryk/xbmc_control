@@ -206,9 +206,21 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	protected class FileThumb extends StringGUIElement {
 		Image thumb = null;
+		boolean haveShowThumb = false;
 		
 		public String getFieldName() {
 			return "Thumb";
+		}
+		
+		public boolean updateValue(String name, String newValue) {
+			if(name.equals("Show Title")) {
+				if( (newValue == null && haveShowThumb == true) 
+						|| (newValue != null && haveShowThumb == false) ) {
+					haveShowThumb = !haveShowThumb;
+					dirty = true;
+				}
+			}
+			return super.updateValue(name, newValue);
 		}
 
 		public void fetch(HttpApi api, int width, int height) {
@@ -219,7 +231,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						thumb = ImageFactory.getRemoteImage(api, value);
 
 						if(thumb != null) {
-							thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+							if(haveShowThumb) {
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+							} else {
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (height-35));
+							}
 
 						}
 						dirty = false;
@@ -234,7 +250,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 		public void paint(Graphics g, int width, int height) {
 			if(thumb != null) {
-				g.drawImage(thumb, 10, height-25, Graphics.BOTTOM | Graphics.LEFT);
+				if(haveShowThumb) {
+					g.drawImage(thumb, (int)(10+width*0.2), (int)(height-25-height*0.25), Graphics.VCENTER | Graphics.HCENTER);
+				} else {
+					g.drawImage(thumb, (int)(10+width*0.2), 10+(height-35)/2, Graphics.VCENTER | Graphics.HCENTER);
+				}
 			}
 		}
 		
