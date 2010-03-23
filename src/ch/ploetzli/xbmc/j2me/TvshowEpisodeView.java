@@ -52,13 +52,13 @@ public class TvshowEpisodeView extends DatabaseView {
 		new Thread(new Runnable() {
 			public void run() {
 				try {
-					//api.clearPlayList(1);
+					api.clearPlayList(1);
 					api.setCurrentPlayList(1);
 					if(!row[6].startsWith("stack://"))
 						api.addToPlayList(row[5]+row[6]);
 					else
 						api.addToPlayList(row[6]);
-					api.playNext();
+					api.setPlayListSong(1);
 				} catch (Exception e) {
 					Logger.getLogger().error(e);
 				}

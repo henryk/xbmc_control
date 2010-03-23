@@ -9,6 +9,36 @@ import ch.ploetzli.xbmc.Logger;
 /**
  * There is no notification of playback progress, so this thread
  * will periodically poll the status.
+ * 
+ * The policy should be something like this (FIXME: not yet implemented)
+ * All polling actions will take place in a dedicated thread and therefore
+ * be synchronized with each other. The thread will guard a minimum time of
+ * 1s between pollings. If polling is requested before 1s since the last
+ * polling has passed it will be delayed (and potentially: accumulated).
+ * There is no queue, so there can always only be one deferred polling 
+ * action scheduled.
+ * 
+ * Trying to parse useful information from the broadcasts is hopeless, so
+ * they will only be taken as a hint to schedule a polling action (subject
+ * to rate limiting of course). The interest levels are as follows:
+ * 
+ * Level 0 (i.e. no listener connected): No periodic polling. No broadcast
+ * 	induced polling. Upon exit from level 0 into any other level one
+ * 	polling action is to be scheduled.
+ * Level 1: Periodic polling every 60s as well as in response to broadcasts.
+ * Level 2: Periodic polling every 10s as well as in response to broadcasts.
+ * 	The monitor may evaluate polling results and in the presence of a
+ * 	Duration field modulate the polling frequency between 1s and 60s to
+ * 	match one hundredth of the duration.
+ * Level 3: Periodic polling every 1s as well as in response to broadcasts.
+ * 
+ * For levels 2 and 3 a pause mode is defined: If a PlayStatus field is
+ *  present and indicates paused playback, or Filename, Duration and Time
+ *  fields are absent (indicating stopped playback), the monitor will enter
+ *  pause mode and reduce its polling intervals to 60s for level 2 and 10s
+ *  for level 3. Interval polling or broadcast initiated polling may lead to
+ *  the pause mode being exited.
+ * 
  * @author henryk
  *
  */

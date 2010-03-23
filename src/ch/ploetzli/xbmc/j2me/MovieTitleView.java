@@ -31,12 +31,13 @@ public class MovieTitleView extends DatabaseView {
 			public void run() {
 				try {
 					/* See TvshowEpisodeView.select for a rant on why the path */
+					api.clearPlayList(1);
 					api.setCurrentPlayList(1);
 					if(!row[3].startsWith("stack://"))
 						api.addToPlayList(row[2]+row[3]);
 					else
 						api.addToPlayList(row[3]);
-					api.playNext();
+					api.setPlayListSong(1);
 				} catch (IOException e) {;}
 			}
 		}).start();

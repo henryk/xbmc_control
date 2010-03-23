@@ -197,4 +197,8 @@ public class HttpApi {
 		simpleCommand("AddToPlayList("+filePath+")");
 	}
 
+	public void setPlayListSong(int i) throws IOException {
+		simpleCommand("SetPlayListSong("+i+")");
+	}
+
 }
