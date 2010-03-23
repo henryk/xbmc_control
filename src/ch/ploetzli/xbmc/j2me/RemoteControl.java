@@ -220,25 +220,13 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	protected class FileThumb extends StringGUIElement {
 		Image thumb = null;
-		boolean haveShowThumb = false;
 		
 		public FileThumb() {super();}
 		
 		public String[] getFieldNames() {
-			return new String[]{"Thumb"};
+			return new String[]{"Thumb", "Show Title"};
 		}
 		
-		public boolean updateValue(String name, String newValue) {
-			if(name.equals("Show Title")) {
-				if( (newValue == null && haveShowThumb == true) 
-						|| (newValue != null && haveShowThumb == false) ) {
-					haveShowThumb = !haveShowThumb;
-					dirty = true;
-				}
-			}
-			return super.updateValue(name, newValue);
-		}
-
 		public void fetch(HttpApi api, int width, int height) {
 			if(dirty) {
 				thumb = null;
@@ -247,7 +235,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						thumb = ImageFactory.getRemoteImage(api, value[0]);
 
 						if(thumb != null) {
-							if(haveShowThumb) {
+							if(value[1] != null) {
 								/* maximum width: fixed factor; maximum height: fixed factor */
 								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.42));
 							} else {
@@ -268,7 +256,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 		public void paint(Graphics g, int width, int height) {
 			if(thumb != null) {
-				if(haveShowThumb) {
+				if(value[1] != null) {
 					/* x: top + 10px border + maximum width/2; y: bottom - 10px border - 15px progress bar - title label - maximum height/2 */
 					g.drawImage(thumb, (int)(10+width*0.2), (int)(height-25-font.getHeight()-height*0.21), Graphics.VCENTER | Graphics.HCENTER);
 				} else {
