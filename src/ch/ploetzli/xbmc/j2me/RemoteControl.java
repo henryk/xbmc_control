@@ -127,21 +127,29 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	protected abstract class StringGUIElement extends GUIElement {
-		String value;
+		String[] value;
+		String[] fields;
+		
+		public StringGUIElement() {
+			fields = getFieldNames();
+			value = new String[fields.length];	
+		}
 		
 		public boolean updateValue(String name, String newValue) {
-			if(!name.equals(getFieldName()))
-				return dirty;
-			if( value == null && newValue == null)
-				return dirty; /* Nothing to do */
-			else if( value != null || newValue != null || !value.equals(newValue)) { 
-				value = newValue;
-				dirty = true;
+			for(int i=0; i<fields.length; i++) {
+				if(!name.equals(fields[i]))
+					continue;
+				if( value[i] == null && newValue == null)
+					continue; /* Nothing to do */
+				else if( value[i] != null || newValue != null || !value[i].equals(newValue)) { 
+					value[i] = newValue;
+					dirty = true;
+				}
 			}
 			return dirty;
 		}
 		
-		public abstract String getFieldName();
+		public abstract String[] getFieldNames();
 	}
 	
 	protected abstract class IntegerGUIElement extends GUIElement {
@@ -168,16 +176,18 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	protected class TvshowThumb extends StringGUIElement {
 		Image thumb = null;
 		
-		public String getFieldName() {
-			return "Show Title";
+		public TvshowThumb() { super(); }
+		
+		public String[] getFieldNames() {
+			return new String[]{"Show Title"};
 		}
 
 		public void fetch(HttpApi api, int width, int height) {
 			if(dirty) {
 				thumb = null;
-				if(api != null && value != null) {
+				if(api != null && value[0] != null) {
 					try {
-						RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+value+"' LIMIT 1");
+						RecordSetConnection conn = api.queryVideoDatabase("SELECT strPath,c00 FROM tvshowview WHERE c00 = '"+value[0]+"' LIMIT 1");
 						String data[] = new String[]{};
 						if(conn.hasMoreElements())
 							data = (String[]) conn.nextElement();
@@ -194,7 +204,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					} catch (Exception e) {
 						Logger.getLogger().error(e);
 					}
-				} else if(value == null) {
+				} else if(value[0] == null) {
 					dirty = false;
 				}
 			}
@@ -212,8 +222,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		Image thumb = null;
 		boolean haveShowThumb = false;
 		
-		public String getFieldName() {
-			return "Thumb";
+		public FileThumb() {super();}
+		
+		public String[] getFieldNames() {
+			return new String[]{"Thumb"};
 		}
 		
 		public boolean updateValue(String name, String newValue) {
@@ -230,9 +242,9 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void fetch(HttpApi api, int width, int height) {
 			if(dirty) {
 				thumb = null;
-				if(api != null && value != null) {
+				if(api != null && value[0] != null) {
 					try {
-						thumb = ImageFactory.getRemoteImage(api, value);
+						thumb = ImageFactory.getRemoteImage(api, value[0]);
 
 						if(thumb != null) {
 							if(haveShowThumb) {
@@ -248,7 +260,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					} catch (Exception e) {
 						Logger.getLogger().error(e);
 					}
-				} else if(value == null) {
+				} else if(value[0] == null) {
 					dirty = false;
 				}
 			}
@@ -307,19 +319,37 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	protected class TitleLabel extends StringGUIElement {
-
-		public String getFieldName() {
-			return "Title";
+		public TitleLabel() { super(); }
+		
+		public String[] getFieldNames() {
+			return new String[]{"Title", "Season", "Episode"};
 		}
 
 		public void fetch(HttpApi api, int width, int height) {
 		}
 
 		public void paint(Graphics g, int width, int height) {
-			if(value != null) {
+			if(value[0] != null || value[2] != null) {
 				g.setColor(160, 160, 180);
 				g.setFont(font);
-				g.drawString(value, 10, height-25, Graphics.LEFT | Graphics.BOTTOM);
+				StringBuffer buf = new StringBuffer();
+				if(value[1] != null && value[2] == null) {
+					buf.append("Season ");
+					buf.append(value[1]);
+					buf.append(": ");
+				} else if(value[1] == null && value[2] != null) {
+					buf.append("Ep. ");
+					buf.append(value[2]);
+					buf.append(": ");
+				} else if(value[1] != null && value[2] != null) {
+					buf.append("Ep. ");
+					buf.append(value[1]);
+					buf.append("x");
+					buf.append(value[2]);
+					buf.append(": ");
+				}
+				buf.append(value[0]);
+				g.drawString(buf.toString(), 10, height-25, Graphics.LEFT | Graphics.BOTTOM);
 			}
 		}
 		
@@ -353,11 +383,16 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						
 						drawBackground(width, height);
 						
-						for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
-							GUIElement element = (GUIElement) e.nextElement();
-							element.fetch(api, width, height);
-							element.paint(g, width, height);
-							dirty = dirty || element.getDirty();
+						try {
+							for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+								GUIElement element = (GUIElement) e.nextElement();
+								element.fetch(api, width, height);
+								element.paint(g, width, height);
+								dirty = dirty || element.getDirty();
+							}
+						} catch(Exception e) {
+							Logger.getLogger().error(e);
+							e.printStackTrace();
 						}
 
 						flushGraphics();
@@ -376,9 +411,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		public synchronized void setValue(String name, String newValue) {
-			for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
-				GUIElement element = (GUIElement) e.nextElement();
-				dirty = element.updateValue(name, newValue) || dirty;
+			try {
+				for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+					GUIElement element = (GUIElement) e.nextElement();
+					dirty = element.updateValue(name, newValue) || dirty;
+				}
+			} catch(Exception e) {
+				Logger.getLogger().error(e);
+				e.printStackTrace();
 			}
 		}
 		
@@ -401,9 +441,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		protected void sizeChanged(int w, int h) {
 			Logger.getLogger().info("sizeChanged");
 			synchronized(this) {
-				for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
-					GUIElement element = (GUIElement) e.nextElement();
-					element.sizeChanged(w, h);
+				try {
+					for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+						GUIElement element = (GUIElement) e.nextElement();
+						element.sizeChanged(w, h);
+					}
+				} catch(Exception e) {
+					Logger.getLogger().error(e);
+					e.printStackTrace();
 				}
 				dirty = true;
 			}
