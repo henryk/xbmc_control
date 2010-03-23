@@ -107,6 +107,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
+	Font font = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_BOLD , Font.SIZE_MEDIUM);
+	
 	protected abstract class GUIElement {
 		protected boolean dirty = false;
 		public abstract boolean updateValue(String name, String value);
@@ -185,7 +187,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						}
 
 						if(thumb != null) {
-							thumb = ImageFactory.scaleImageToFit(thumb,	width-20, (int)(height*0.3));
+							/* maximum width: fullcreen - 2*10px border; maximum height: fullscreen - 10px border - 15px progress bar - title label - maximum height of FileThumb */
+							thumb = ImageFactory.scaleImageToFit(thumb,	width-20, (int) (height-35-font.getHeight()-height*0.42));
 						}
 						dirty = false;
 					} catch (Exception e) {
@@ -233,9 +236,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 						if(thumb != null) {
 							if(haveShowThumb) {
-								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.5));
+								/* maximum width: fixed factor; maximum height: fixed factor */
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.42));
 							} else {
-								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (height-35));
+								/* maximum width: fixed factor; maximum height: fullscreen - 10px border - 15px progress bar - title label */
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (height-35-font.getHeight()));
 							}
 
 						}
@@ -252,9 +257,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void paint(Graphics g, int width, int height) {
 			if(thumb != null) {
 				if(haveShowThumb) {
-					g.drawImage(thumb, (int)(10+width*0.2), (int)(height-25-height*0.25), Graphics.VCENTER | Graphics.HCENTER);
+					/* x: top + 10px border + maximum width/2; y: bottom - 10px border - 15px progress bar - title label - maximum height/2 */
+					g.drawImage(thumb, (int)(10+width*0.2), (int)(height-25-font.getHeight()-height*0.21), Graphics.VCENTER | Graphics.HCENTER);
 				} else {
-					g.drawImage(thumb, (int)(10+width*0.2), 10+(height-35)/2, Graphics.VCENTER | Graphics.HCENTER);
+					/* x: top + 10px border + maximum width/2; y: top + 10px border + maximum height/2 */
+					g.drawImage(thumb, (int)(10+width*0.2), 10+(height-35-font.getHeight())/2, Graphics.VCENTER | Graphics.HCENTER);
 				}
 			}
 		}
@@ -311,9 +318,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void paint(Graphics g, int width, int height) {
 			if(value != null) {
 				g.setColor(160, 160, 180);
-				Font font = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_BOLD , Font.SIZE_MEDIUM);
 				g.setFont(font);
-				g.drawString(value, (int)(10+width*0.4+3), (int) (height*0.3+10), Graphics.LEFT | Graphics.TOP);
+				g.drawString(value, 10, height-25, Graphics.LEFT | Graphics.BOTTOM);
 			}
 		}
 		
