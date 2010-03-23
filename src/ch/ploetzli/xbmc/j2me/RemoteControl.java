@@ -340,6 +340,30 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				g.drawString(buf.toString(), 10, height-25, Graphics.LEFT | Graphics.BOTTOM);
 			}
 		}
+	}
+	
+	protected class TimeLabel extends StringGUIElement {
+		public TimeLabel() { super(); }
+
+		public String[] getFieldNames() {
+			return new String[] {"Time", "Duration"};
+		}
+
+		public void fetch(HttpApi api, int width, int height) {
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			if(value[0] != null) {
+				g.setColor(160, 180, 160);
+				g.setFont(font);
+				StringBuffer buf = new StringBuffer(value[0]);
+				if(value[1] != null) {
+					buf.append(" / ");
+					buf.append(value[1]);
+				}
+				g.drawString(buf.toString(), width-10, height-25-font.getHeight(), Graphics.RIGHT | Graphics.BOTTOM);
+			}
+		}
 		
 	}
 	
@@ -355,6 +379,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			guiElements.addElement(new TvshowThumb());
 			guiElements.addElement(new FileThumb());
 			guiElements.addElement(new PlaybackProgress());
+			guiElements.addElement(new TimeLabel());
 			guiElements.addElement(new TitleLabel());
 		}
 		
