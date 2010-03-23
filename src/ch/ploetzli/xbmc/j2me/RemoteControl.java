@@ -30,7 +30,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	
 	public RemoteControl(String name) {
 		super(name);
-		setupListener();
+		pause();
 	}
 
 	protected Displayable constructDisplayable() {
@@ -100,10 +100,17 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			canvas.setValue(property, newValue);
 	}
 	
-	private void setupListener() {
+	private void unpause() {
 		HttpApi api = getApi();
 		if(api != null) {
-			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_PERCENTAGE);
+			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_TIME);
+		}
+	}
+	
+	private void pause() {
+		HttpApi api = getApi();
+		if(api != null) {
+			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_BASIC);
 		}
 	}
 	
@@ -386,7 +393,6 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void run() {
 			synchronized(this) {
 				if(shown) {
-					Logger.getLogger().info("Running");
 					if(dirty) {
 						dirty = false;
 						int height = getHeight();
@@ -410,16 +416,12 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 						flushGraphics();
 					}
-					Logger.getLogger().info("Done");
-				} else {
-					Logger.getLogger().info("Invisible");
 				}
 
 			}
 		}
 		
 		public void refresh() {
-			Logger.getLogger().info("Refreshing");
 			new Thread(this).start();
 		}
 		
@@ -474,11 +476,12 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			synchronized(this) {
 				shown = false;
 			}
+			pause();
 		}
 		
 		protected void showNotify() {
 			Logger.getLogger().info("showNotify");
-			setupListener();
+			unpause();
 			synchronized(this) {
 				shown = true;
 			}

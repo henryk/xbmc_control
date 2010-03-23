@@ -122,6 +122,7 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	}
 
 	private synchronized void setMaxInterestLevel(int interestLevel) {
+		Logger.getLogger().info("New max interest level is "+ interestLevel);
 		maxInterestLevel = interestLevel;
 		if(maxInterestLevel == 0) {
 			/* No one cares */
@@ -148,16 +149,16 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	 * valueChanged() and stateSynchronized() to set up the initial state. The listener
 	 * should assume an empty initial state, even if the same listener is repeatedly
 	 * registered and unregistered to the same monitor.
-	 * @param listener The listener to be registered. No action will be taken if the
-	 * 	listener is already registered.
+	 * @param listener The listener to be registered. If the listener was already
+	 *  registered with a different interestLevel, the interestLevel will be adjusted.
 	 * @param interestLevel Specifies the interest level of this listener. Must be one
 	 * 	of the INTEREST_* constants. The monitor uses this information to optimize the
 	 * 	polling interval or even completely disable polling (if broadcast information
 	 * 	is available).
 	 */
 	public synchronized void registerListener(StateListener listener, int interestLevel) {
-		if(!listeners.containsKey(listener)) {
-			listeners.put(listener, new Integer(interestLevel));
+		Object oldVal = listeners.put(listener, new Integer(interestLevel));
+		if(oldVal == null) {
 			if(maxInterestLevel < interestLevel)
 				setMaxInterestLevel(interestLevel);
 			/* Send the current state */
@@ -166,6 +167,10 @@ public class StateMonitor extends Thread implements BroadcastListener {
 				listener.valueChanged(property, (String)properties.get(property));
 			}
 			listener.stateSynchronized();	
+		} else {
+			if(((Integer)oldVal).intValue() != interestLevel) {
+				setMaxInterestLevel(calculateMaxInterestLevel());
+			}
 		}
 	}
 	
@@ -177,14 +182,21 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	public synchronized void unregisterListener(StateListener listener) {
 		if(listeners.containsKey(listener)) {
 			listeners.remove(listener);
-			int m = 0;
-			for(Enumeration e = listeners.elements(); e.hasMoreElements(); ) {
-				int interestLevel = ((Integer)e.nextElement()).intValue();
-				if(m < interestLevel)
-					m = interestLevel;
-			}
-			setMaxInterestLevel(m);
+			setMaxInterestLevel(calculateMaxInterestLevel());
 		}
+	}
+
+	/**
+	 * @return The maximum interest level registered by any listener.
+	 */
+	private synchronized int calculateMaxInterestLevel() {
+		int level = 0;
+		for(Enumeration e = listeners.elements(); e.hasMoreElements(); ) {
+			int interestLevel = ((Integer)e.nextElement()).intValue();
+			if(level < interestLevel)
+				level = interestLevel;
+		}
+		return level;
 	}
 
 	public void broadcastReceived(String source, String name, String data, int level) {
