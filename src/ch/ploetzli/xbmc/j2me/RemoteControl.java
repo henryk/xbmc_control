@@ -286,8 +286,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				barWidth = (maxWidth * value) / 100;
 				g.setColor(0, 0, 0);
 				g.fillRoundRect(10, height-20, maxWidth, 10, 10, 10);
+				g.setColor(31, 31, 31);
+				g.drawRoundRect(10, height-20, maxWidth, 10, 10, 10);
 				g.setColor(160, 160, 160);
 				g.fillRoundRect(10, height-20, barWidth, 10, 10, 10);
+				g.setColor(191, 191, 191);
+				g.drawRoundRect(10, height-20, barWidth, 10, 10, 10);
+				g.setColor(207, 207, 207);
+				g.fillRoundRect(11, height-20+1, barWidth-2, 5, 4, 4);
 			}
 		}
 		
@@ -440,16 +446,16 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		protected void keyPressed(int keyCode) {
-			Logger.getLogger().info("Pressed: " + getKeyName(keyCode));
+			//Logger.getLogger().info("Pressed: " + getKeyName(keyCode));
 			super.keyPressed(keyCode);
 		}
 		protected void keyReleased(int keyCode) {
-			Logger.getLogger().info("Released: " + getKeyName(keyCode));
+			//Logger.getLogger().info("Released: " + getKeyName(keyCode));
 			actOnKey(keyCode);
 			super.keyReleased(keyCode);
 		}
 		protected void keyRepeated(int keyCode) {
-			Logger.getLogger().info("Repeated: " + getKeyName(keyCode));
+			//Logger.getLogger().info("Repeated: " + getKeyName(keyCode));
 			actOnKey(keyCode);
 			super.keyRepeated(keyCode);
 		}
