@@ -317,14 +317,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public TitleLabel() { super(); }
 		
 		public String[] getFieldNames() {
-			return new String[]{"Title", "Season", "Episode"};
+			return new String[]{"Title", "Season", "Episode", "Filename"};
 		}
 
 		public void fetch(HttpApi api, int width, int height) {
 		}
 
 		public void paint(Graphics g, int width, int height) {
-			if(value[0] != null || value[2] != null) {
+			if(value[0] != null || value[2] != null || value[3] != null) {
 				g.setColor(160, 160, 180);
 				g.setFont(font);
 				StringBuffer buf = new StringBuffer();
@@ -343,7 +343,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					buf.append(value[2]);
 					buf.append(": ");
 				}
-				buf.append(value[0]);
+				if(value[0] != null)
+					buf.append(value[0]);
+				else if(value[3] != null)
+					buf.append(value[3]);
 				g.drawString(buf.toString(), 10, height-25, Graphics.LEFT | Graphics.BOTTOM);
 			}
 		}
