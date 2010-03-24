@@ -8,8 +8,7 @@ public class TvshowGenreView extends DatabaseView {
 	protected void select(String[] row) {
 		if(row.length > 1) {
 			DatabaseView v = TvshowTitleView.get(row[1], "tvshowview join genrelinktvshow on genrelinktvshow.idShow = tvshowview.idShow", "genrelinktvshow.idGenre = "+row[0]);
-			v.setParent(this);
-			show(v);
+			showChild(v);
 		}
 	}
 }

@@ -27,6 +27,8 @@ public class MovieTitleView extends DatabaseView {
 		if(row.length < 4)
 			return;
 		
+		final RemoteControl rc = (RemoteControl)getRoot().getChildByClass(RemoteControl.class);
+		
 		new Thread(new Runnable() {
 			public void run() {
 				try {
@@ -38,6 +40,8 @@ public class MovieTitleView extends DatabaseView {
 					else
 						api.addToPlayList(row[3]);
 					api.setPlayListSong(1);
+					if(rc != null)
+						showChild(rc);
 				} catch (IOException e) {;}
 			}
 		}).start();

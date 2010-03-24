@@ -40,6 +40,8 @@ public class TvshowEpisodeView extends DatabaseView {
 		if(row.length < 7)
 			return;
 		
+		final RemoteControl rc = (RemoteControl)getRoot().getChildByClass(RemoteControl.class);
+		
 		/* In principle one would want to use addToPlayListFromDB to be abstract from whatever
 		 * path or other location information is internally used. However, it is broken.
 		 * F.e. AddToPlayListFromDB(episodes;idEpisode=1923) for me generates a playlist item
@@ -59,6 +61,8 @@ public class TvshowEpisodeView extends DatabaseView {
 					else
 						api.addToPlayList(row[6]);
 					api.setPlayListSong(1);
+					if(rc != null)
+						showChild(rc);
 				} catch (Exception e) {
 					Logger.getLogger().error(e);
 				}

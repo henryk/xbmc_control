@@ -8,8 +8,7 @@ public class TvshowYearView extends DatabaseView {
 	protected void select(String[] row) {
 		if(row.length > 0) {
 			DatabaseView v = TvshowTitleView.get("Year " + row[0], "substr(c05,0,5) = '"+row[0]+"'");
-			v.setParent(this);
-			show(v);
+			showChild(v);
 		}
 	}
 }

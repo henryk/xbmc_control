@@ -46,6 +46,38 @@ public class SubMenu implements CommandListener {
 	}
 	
 	/**
+	 * Return the root of this SubMenu structure, e.g. wander up
+	 * the parent chain until there are no more parents.
+	 * @return A SubMenu that has a null parent. Can not be null.
+	 */
+	public SubMenu getRoot() {
+		SubMenu result = this;
+		while(result.parent != null)
+			result = result.parent;
+		return result;
+	}
+	
+	/**
+	 * Return either this object or one of the recursive 
+	 * (depth-first) children that are instances of the
+	 * given class and return the first result.
+	 * @param cls SubMenu.class or a subclass thereof
+	 * @return This object or the first (indirect) child
+	 * 	that is an instance of cls. If no child is found
+	 * 	return null;
+	 */
+	public SubMenu getChildByClass(Class cls) {
+		if(cls.isInstance(this))
+			return this;
+		for(int i=0; i<subMenus.length; i++) {
+			SubMenu result = subMenus[i].getChildByClass(cls);
+			if(result != null)
+				return result;
+		}
+		return null;
+	}
+	
+	/**
 	 * Set the Display this menu should be displayed on for
 	 * purposes of the show method.
 	 * @param display
@@ -162,7 +194,7 @@ public class SubMenu implements CommandListener {
 	protected void select(int index) {
 		if(subMenus != null) {
 			if(index >= 0 && index < subMenus.length)
-				show(subMenus[index]);
+				showChild(subMenus[index]);
 		} else {
 			Logger.getLogger().error("No submenus");
 		}
@@ -183,5 +215,18 @@ public class SubMenu implements CommandListener {
 		} else {
 			Logger.getLogger().error("Can't show "+menu.name+" without a Display");
 		}
+	}
+	
+	/**
+	 * Show the given menu on the same Display as the current menu and
+	 * reparent the given menu to be a submenu of this
+	 * Will trigger a refresh of the contents of menu and set it to
+	 * be displayed on the same Display as this menu.
+	 * @param menu
+	 */
+	protected void showChild(SubMenu menu)
+	{
+		menu.setParent(this);
+		show(menu);
 	}
 }
