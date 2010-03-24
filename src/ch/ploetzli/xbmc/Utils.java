@@ -58,74 +58,81 @@ public class Utils {
 			assertRead(is, s.charAt(i));
 		}
 	}
-
-	/* Read from is until one of the strings in toMatch is matched. Returns an array of 
-	 * two elements: The first element is the data read up to the matcher, the second is the
-	 * string from toMatch that matched, or "" in case of stream end before complete match   
-	 */
-	public static String[] findRead(InputStream is, String[] toMatch, boolean isUtf8) throws IOException
+	
+	public static boolean arrayPrefixEqual(byte[] a1, int off1, byte[] a2, int off2, int len)
 	{
-		String[] result = new String[2];
-		int matchcount = toMatch.length;
-		StringBuffer matching = new StringBuffer();
-		StringBuffer nonmatching = new StringBuffer();
+		if(off1+len > a1.length)
+			return false;
+		if(off2+len > a2.length)
+			return false;
+		for(int i=0; i<len; i++)
+			if(a1[off1+i] != a2[off2+i])
+				return false;
+		return true;
+	}
+
+	/** Read from is until one of the strings in toMatch is matched. Returns an array of 
+	 * two elements: The first element is the data read up to the matcher, the second is the
+	 * sequence from toMatch that matched, or {} in case of stream end before complete match
+	 * @param is An InputStream to read from
+	 * @param toMatch An array of byte arrays with the data to be matched
+	 * @return An array of 2 byte arrays. The first item contains the byte sequence that was read,
+	 * 	the second is the byte sequence from toMatch that was matched.   
+	 */
+	public static byte[][] findRead(InputStream is, byte[][] toMatch) throws IOException
+	{
+		byte[][] result = new byte[2][];
+		final int matchcount = toMatch.length;
+		final int bufferIncrement = 1024;
+		byte buffer[] = new byte[bufferIncrement];
+		int matchLen = 0;
+		int nonmatchLen = 0;
 		
-		result[1] = "";
+		result[1] = new byte[]{};
 		
 		int ch, i;
 		boolean fullMatchFound = false;
 		while( (ch = is.read()) != -1) {
-			matching.append((char)ch);
-			String m = matching.toString();
+			if(nonmatchLen + matchLen + 1 >= buffer.length) {
+				byte[] newBuffer = new byte[buffer.length+bufferIncrement];
+				System.arraycopy(buffer, 0, newBuffer, 0, buffer.length);
+				buffer = newBuffer;
+			}
+			buffer[ nonmatchLen + (matchLen++) ] = (byte) ch;
 			boolean prefixMatchFound = false;
 			for(i=0; i<matchcount; i++) {
-				if(toMatch[i].startsWith(m)) {
+				if(arrayPrefixEqual(buffer, nonmatchLen, toMatch[i], 0, matchLen)) {
 					prefixMatchFound = true;
-					if(toMatch[i].equals(m)) {
+					if(toMatch[i].length == matchLen) {
 						fullMatchFound = true;
-						result[0] = nonmatching.toString();
+						result[0] = new byte[nonmatchLen];
+						System.arraycopy(buffer, 0, result[0], 0, nonmatchLen);
 						result[1] = toMatch[i];
 					}
 					break;
 				}
 			}
-			
+
 			if(fullMatchFound)
 				break;
-			
+
 			if(!prefixMatchFound) {
 				/* Move the matching buffer to the end of the nonmatching buffer and start again with a 
 				 * clean matching buffer
 				 */
-				nonmatching.append(m);
-				matching.delete(0, matching.length());
+				nonmatchLen += matchLen;
+				matchLen = 0;
 			}
 		}
 		
 		if(!fullMatchFound) {
-			nonmatching.append(matching.toString());
-			result[0] = nonmatching.toString();
-		}
-		
-		if(isUtf8) {
-			/* This is a horrible hack to solve the encoding problem, but I couldn't find
-			 * a proper way to solve it earlier. In principle one should not treat the
-			 * incoming byte stream as a String up to this point but as a byte sequence
-			 * (and also convert all the entries of the toMatch array to a byte sequence
-			 * before matching) and then only decode into a String at this point. However,
-			 * StringBuffer is the most convenient way to incrementally build a buffer and
-			 * not worry about memory management, so I'm using that. The downside of course
-			 * is that StringBuffer will construct a String and not a byte sequence.
-			 */
-			result[0] = new String(result[0].getBytes("windows-1252"), "UTF-8");
+			nonmatchLen += matchLen;
+			matchLen = 0;
+			result[0] = new byte[nonmatchLen];
+			System.arraycopy(buffer, 0, result[0], 0, nonmatchLen);
 		}
 		
 		return result;
-	}
-
-	public static String[] findRead(InputStream is, String[] toMatch) throws IOException
-	{
-		return findRead(is, toMatch, false);
 	}
 
 	/* This is a CRC-32 routine that works with the way the xbmc crc32 thumbnail generation

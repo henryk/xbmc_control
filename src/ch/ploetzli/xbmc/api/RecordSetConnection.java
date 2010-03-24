@@ -6,31 +6,33 @@ import java.util.Enumeration;
 import java.util.NoSuchElementException;
 import java.util.Vector;
 
+import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 
 public class RecordSetConnection implements Enumeration {
 	private InputStream is;
 	private boolean finished;
 	private boolean haveRecordStart = false;
-	private boolean isUtf8;
+	private String enc;
 
-	protected RecordSetConnection(InputStream is, boolean isUtf8)
+	protected RecordSetConnection(InputStream is, String enc)
 	{
 		this.is = is;
 		this.finished = false;
-		this.isUtf8 = isUtf8;
+		this.enc = enc;
 	}
 
 	protected RecordSetConnection(InputStream is)
 	{
-		this(is, false);
+		this(is, "Windows-1252");
 	}
 	
 	public boolean hasMoreElements() {
 		return !finished;
 	}
 
-	private static final String[] tokens = new String[]{"<html>", "</html>", "<record>", "</record>", "<field>", "</field>"}; 
+	private static final byte[][] tokens = new byte[][]{"<html>".getBytes(), "</html>".getBytes(),
+		"<record>".getBytes(), "</record>".getBytes(), "<field>".getBytes(), "</field>".getBytes()}; 
 	public Object nextElement() {
 		Vector fields = new Vector();
 		boolean done = false;
@@ -43,10 +45,10 @@ public class RecordSetConnection implements Enumeration {
 		
 		while(!done) {
 			try {
-				String r[] = Utils.findRead(is, tokens, isUtf8);
+				byte r[][] = Utils.findRead(is, tokens);
 				if(r[1] == tokens[0]) { /* <html> */
 					/* Ignore */
-				} else if(r[1] == tokens[1] || r[1] == "") { /* </html> */
+				} else if(r[1] == tokens[1] || r[1] == new byte[]{}) { /* </html> */
 					/* End of input, discard half-baked record and return nothing, or return 
 					 * finished unreturned record */
 					
@@ -89,7 +91,11 @@ public class RecordSetConnection implements Enumeration {
 				} else if(r[1] == tokens[5]) { /* </field> */
 					if(haveRecordStart) {
 						if(fieldStarted) {
-							fields.addElement(r[0]);
+							String s = "[Invalid encoding: Does not decode as enc in RecordSetConnection.nextElement()]";
+							try {
+								s = new String(r[0], 0, r[0].length, enc);
+							} catch(RuntimeException e) { Logger.getLogger().info(e); }
+							fields.addElement(s);
 						}
 						fieldStarted = false;
 					}

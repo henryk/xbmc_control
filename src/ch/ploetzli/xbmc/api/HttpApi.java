@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import javax.microedition.io.*;
 
+import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 
 public class HttpApi {
@@ -55,30 +56,38 @@ public class HttpApi {
 		
 		/* The individual items are separated by <li>, 
 		 * input ends with </html> */
-		final String[] tokens = new String[]{"<li>", "</html"};
+		final byte[][] tokens = new byte[][]{"<li>".getBytes(), "</html>".getBytes()};
 		try {
 			boolean keepGoing = true;
 			boolean first = true;
 			boolean hadone = false;
 			do {
-				String r[] = Utils.findRead(is, tokens);
-				if(r[1].equals(tokens[0])) {
+				byte r[][] = Utils.findRead(is, tokens);
+				if(r[1] == tokens[0]) {
 					hadone = true;
 					if(first) {
 						/* Ignore the text before the first <li> */
 						first = false;
 					} else {
+						String s = "[Invalid encoding: Does not decode as UTF-8 in HttpApi.simpleCommand(String, boolean)]";
+						try {
+							s = new String(r[0], 0, r[0].length, "UTF-8");
+						} catch(RuntimeException e) { Logger.getLogger().info(e); }
 						if(stripSpaces)
-							result.addElement(r[0].trim());
+							result.addElement(s.trim());
 						else
-							result.addElement(r[0]);
+							result.addElement(s);
 					}
 				} else {
 					if(hadone) {
+						String s = "[Invalid encoding: Does not decode as UTF-8 in HttpApi.simpleCommand(String, boolean)]";
+						try {
+							s = new String(r[0], 0, r[0].length, "UTF-8");
+						} catch(RuntimeException e) { Logger.getLogger().info(e); }
 						if(stripSpaces)
-							result.addElement(r[0].trim());
+							result.addElement(s.trim());
 						else
-							result.addElement(r[0]);
+							result.addElement(s);
 					}
 					keepGoing = false;
 				}
@@ -99,7 +108,7 @@ public class HttpApi {
 		return simpleCommand(cmd, false);
 	}
 	
-	public RecordSetConnection databaseCommand(String cmd, boolean isUtf8) throws IOException
+	public RecordSetConnection databaseCommand(String cmd, String enc) throws IOException
 	{
 		HttpConnection conn = openCommandConnection(cmd);
 		InputStream is = conn.openInputStream();
@@ -107,17 +116,17 @@ public class HttpApi {
 		/* All responses start with <html>, so match that and bail in case of mismatch */
 		Utils.assertRead(is, "<html>");
 		
-		return new RecordSetConnection(is, isUtf8);
+		return new RecordSetConnection(is, enc);
 	}
 	
 	public RecordSetConnection queryVideoDatabase(String query) throws IOException
 	{
-		return databaseCommand("QueryVideoDatabase("+query+")", true);
+		return databaseCommand("QueryVideoDatabase("+query+")", "UTF-8");
 	}
 	
 	public RecordSetConnection queryMusicDatabase(String query) throws IOException
 	{
-		return databaseCommand("QueryMusicDatabase("+query+")", true);
+		return databaseCommand("QueryMusicDatabase("+query+")", "UTF-8");
 	}
 	
 	public String[] getCurrentPlaylist() throws IOException
