@@ -205,7 +205,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 						if(thumb != null) {
 							/* maximum width: fullcreen - 2*10px border; maximum height: fullscreen - 10px border - 15px progress bar - title label - maximum height of FileThumb */
-							thumb = ImageFactory.scaleImageToFit(thumb,	width-20, (int) (height-35-font.getHeight()-height*0.42));
+							thumb = ImageFactory.scaleImageToFit(thumb,	width-20, (int) (height-35-font.getHeight()-height*FileThumb.maxHeightFactor));
 						}
 						dirty = false;
 					} catch (Exception e) {
@@ -227,6 +227,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	protected class FileThumb extends StringGUIElement {
 		Image thumb = null;
+		static final double maxWidthFactor = 0.4;
+		static final double maxHeightFactor = 0.42;
 		
 		public FileThumb() {super();}
 		
@@ -244,10 +246,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 						if(thumb != null) {
 							if(value[1] != null) {
 								/* maximum width: fixed factor; maximum height: fixed factor */
-								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (int)(height*0.42));
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*maxWidthFactor), (int)(height*maxHeightFactor));
 							} else {
 								/* maximum width: fixed factor; maximum height: fullscreen - 10px border - 15px progress bar - title label */
-								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*0.4), (height-35-font.getHeight()));
+								thumb = ImageFactory.scaleImageToFit(thumb, (int)(width*maxWidthFactor), (height-35-font.getHeight()));
 							}
 
 						}
@@ -264,11 +266,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void paint(Graphics g, int width, int height) {
 			if(thumb != null) {
 				if(value[1] != null) {
-					/* x: top + 10px border + maximum width/2; y: bottom - 10px border - 15px progress bar - title label - maximum height/2 */
-					g.drawImage(thumb, (int)(10+width*0.2), (int)(height-25-font.getHeight()-height*0.21), Graphics.VCENTER | Graphics.HCENTER);
+					/* x: left + 10px border + maximum width/2; y: bottom - 10px border - 15px progress bar - title label - maximum height/2 */
+					g.drawImage(thumb, (int)(10+width*maxWidthFactor/2), (int)(height-25-font.getHeight()-height*maxHeightFactor/2), Graphics.VCENTER | Graphics.HCENTER);
 				} else {
-					/* x: top + 10px border + maximum width/2; y: top + 10px border + maximum height/2 */
-					g.drawImage(thumb, (int)(10+width*0.2), 10+(height-35-font.getHeight())/2, Graphics.VCENTER | Graphics.HCENTER);
+					/* x: left + 10px border + maximum width/2; y: top + 10px border + maximum height/2 */
+					g.drawImage(thumb, (int)(10+width*maxWidthFactor/2), 10+(height-35-font.getHeight())/2, Graphics.VCENTER | Graphics.HCENTER);
 				}
 			}
 		}
@@ -317,39 +319,56 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public TitleLabel() { super(); }
 		
 		public String[] getFieldNames() {
-			return new String[]{"Title", "Season", "Episode", "Filename"};
+			return new String[]{"Title", "Filename"};
 		}
 
 		public void fetch(HttpApi api, int width, int height) {
 		}
 
 		public void paint(Graphics g, int width, int height) {
-			if(value[0] != null || value[2] != null || value[3] != null) {
+			if(value[0] != null || value[1] != null) {
 				g.setColor(160, 160, 180);
 				g.setFont(font);
 				StringBuffer buf = new StringBuffer();
-				if(value[1] != null && value[2] == null) {
-					buf.append("Season ");
-					buf.append(value[1]);
-					buf.append(": ");
-				} else if(value[1] == null && value[2] != null) {
-					buf.append("Ep. ");
-					buf.append(value[2]);
-					buf.append(": ");
-				} else if(value[1] != null && value[2] != null) {
-					buf.append("Ep. ");
-					buf.append(value[1]);
-					buf.append("x");
-					buf.append(value[2]);
-					buf.append(": ");
-				}
 				if(value[0] != null)
 					buf.append(value[0]);
-				else if(value[3] != null)
-					buf.append(value[3]);
+				else if(value[1] != null)
+					buf.append(value[1]);
 				g.drawString(buf.toString(), 10, height-25, Graphics.LEFT | Graphics.BOTTOM);
 			}
 		}
+	}
+	
+	protected class SeasonArtistLabel extends StringGUIElement {
+		public SeasonArtistLabel() { super(); }
+		
+		public String[] getFieldNames() {
+			return new String[]{"Season", "Episode", "Artist", "Album"};
+		}
+
+		public void fetch(HttpApi api, int width, int height) {
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			Vector toDraw = new Vector();
+			for(int i = value.length-1; i>=0; i--) {
+				if(value[i] != null) {
+					toDraw.addElement(fields[i]+": "+value[i]);
+				}
+			}
+			
+			if(toDraw.size() > 0) {
+				g.setColor(160, 160, 180);
+				g.setFont(font);
+				int yPos = height-25-2*font.getHeight(); /* bottom - 10px border - 15px progress bar - title label - time label */
+				int xPos = (int) (10 + width*FileThumb.maxWidthFactor + 5); /* left + 10px border + maximum file thumb width + 5px space */
+				for(int i=0; i<toDraw.size(); i++) {
+					g.drawString((String) toDraw.elementAt(i), xPos, yPos, Graphics.LEFT | Graphics.BOTTOM);
+					yPos -= font.getHeight();
+				}
+			}
+		}
+		
 	}
 	
 	protected class TimeLabel extends StringGUIElement {
@@ -364,7 +383,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 		public void paint(Graphics g, int width, int height) {
 			if(value[0] != null) {
-				g.setColor(160, 180, 160);
+				g.setColor(160, 160, 180);
 				g.setFont(font);
 				StringBuffer buf = new StringBuffer(value[0]);
 				if(value[1] != null) {
@@ -390,6 +409,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			guiElements.addElement(new FileThumb());
 			guiElements.addElement(new PlaybackProgress());
 			guiElements.addElement(new TimeLabel());
+			guiElements.addElement(new SeasonArtistLabel());
 			guiElements.addElement(new TitleLabel());
 		}
 		
