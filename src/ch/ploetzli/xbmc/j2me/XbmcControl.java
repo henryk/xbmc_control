@@ -7,43 +7,31 @@ import javax.microedition.midlet.MIDlet;
 import javax.microedition.midlet.MIDletStateChangeException;
 
 import ch.ploetzli.xbmc.Logger;
-import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
-import ch.ploetzli.xbmc.api.RecordSetConnection;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscoverer;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscovererListener;
 
-public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererListener {
+public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscovererListener {
 
-	private Form seriesList;
 	private List deviceList;
 	private Display display;
 	private Command exit;
-	private Command fetch;
 	private Command connect;
 	private MdnsDiscoverer disc = null;
 	private HttpApi api;
 	
-	private int width;
 	private Hashtable devices;
 	
-	public XbmcPoc() {
+	public XbmcControl() {
 		Logger.overrideLogger(new MidletLogger(this));
 		
 		this.display = Display.getDisplay(this);
 		this.deviceList = new List("Select Device", List.IMPLICIT);
 		this.deviceList.setCommandListener(this);
-		this.seriesList = new Form("Test");
-		this.seriesList.setCommandListener(this);
 		
 		this.exit = new Command("Exit", Command.EXIT, 0x01);
-		this.seriesList.addCommand(this.exit);
 		this.deviceList.addCommand(this.exit);
-		this.fetch = new Command("Fetch!", Command.ITEM, 0x01);
-		this.seriesList.addCommand(this.fetch);
 		this.connect = new Command("Connect!", Command.OK, 0x01);
-		
-		this.width = this.seriesList.getWidth() - 10;
 		
 		this.devices = new Hashtable();
 		
@@ -80,13 +68,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 			if(this.disc != null)
 				this.disc.shutdown();
 			this.notifyDestroyed();
-		} else if(command == this.fetch) {
-			new Thread(
-					new Runnable() {
-						public void run() {
-							doFetch();
-						}
-					}).start();
 		} else if(command == this.connect) {
 			new Thread(
 					new Runnable() {
@@ -94,37 +75,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 							doConnect(deviceList.getString(deviceList.getSelectedIndex()));
 						}
 					}).start();
-		}
-	}
-	
-	public void doFetch()
-	{
-		if(api == null)
-			return;
-		Logger.getLogger().info("Good boy");
-		try {
-			RecordSetConnection conn = api.queryVideoDatabase("select strPath,c00 from tvshowview order by c00");
-			while(conn.hasMoreElements()) {
-				Object o = conn.nextElement();
-				if(o instanceof String[]) {
-					String path = ((String[])o)[0];
-					String name = ((String[])o)[1];
-					String crc = Utils.crc32(path);
-					
-					Logger.getLogger().info(Utils.crc32(path) + " " + name);
-					
-					byte imageData[] = api.fileDownload("special://userdata/Thumbnails/Video/"+ crc.charAt(0) + "/" + crc + ".tbn");
-					Image img = Image.createImage(imageData, 0, imageData.length);
-					img = ImageFactory.scaleImage(img, width);
-					
-					this.seriesList.append(img);
-				} else if(o instanceof Exception) {
-					Logger.getLogger().error((Exception)o);
-				}
-			}
-		} catch (IOException e) {
-			Logger.getLogger().error(e);
-			this.seriesList.append(e.toString());
 		}
 	}
 	
@@ -142,7 +92,6 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 		}
 		
 		api = new HttpApi(displayName, address, port);
-		seriesList.setTitle(displayName);
 		
 		topMenu = new DatabaseTopMenu(displayName, new SubMenu[]{
 				new RemoteControl("Remote"),

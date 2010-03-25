@@ -57,11 +57,9 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
-	public void sendKey(int buttoncode) {
-		HttpApi api = getApi();
+	public void sendKey(final int buttoncode) {
+		final HttpApi api = getApi();
 		new Thread() {
-			private int buttoncode;
-			private HttpApi api;
 			public void run() {
 				try {
 					api.sendKey(buttoncode);
@@ -69,11 +67,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 					Logger.getLogger().error(e);
 				}
 			}
-			public void start(HttpApi api, int buttoncode) {
-				this.api = api; this.buttoncode = buttoncode;
-				super.start();
-			}
-		}.start(api, buttoncode);
+		}.start();
 	}
 
 	private HttpApi getApi() {
