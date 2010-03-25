@@ -1,6 +1,6 @@
 package ch.ploetzli.xbmc.j2me;
 
-public class TvshowYearView extends DatabaseView {
+public class TvshowYearView extends VideoDatabaseView {
 	public static DatabaseView get(String name) {
 		return get(TvshowYearView.class, name, null, new String[]{"substr(c05,0,5) as year"}, "tvshowview", "year", "year");
 	}

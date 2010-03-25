@@ -5,7 +5,7 @@ import javax.microedition.lcdui.Image;
 import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.api.HttpApi;
 
-public class TvshowEpisodeView extends DatabaseView {
+public class TvshowEpisodeView extends VideoDatabaseView {
 	
 	public static DatabaseView get(String name, String idShow) {
 		return get(TvshowEpisodeView.class, name, "episodeview.idEpisode", new String[]{"c00","c12","c13","playcount","strPath","strFileName"}, "episodeview", "abs(episodeview.c12),abs(episodeview.c13)", null, "episodeview.idShow="+idShow);

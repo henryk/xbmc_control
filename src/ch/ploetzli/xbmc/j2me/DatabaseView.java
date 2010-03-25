@@ -31,7 +31,7 @@ import ch.ploetzli.xbmc.api.RecordSetConnection;
  * @author henryk
  *
  */
-public class DatabaseView extends DatabaseSubMenu {
+public abstract class DatabaseView extends DatabaseSubMenu {
 	protected static Ticker ticker = new Ticker("Loading ...");
 	
 	protected String keyColumn;
@@ -171,7 +171,7 @@ public class DatabaseView extends DatabaseSubMenu {
 			HttpApi api = topMenu.getApi();
 			if(api != null) {
 				/* TODO Maybe include where clause? */
-				conn = api.queryVideoDatabase("select " + topMenu.getDatabaseEpoch() + ",count("+keyColumn+"), sum("+keyColumn+") from "+table);
+				conn = queryDatabase(api, "select " + topMenu.getDatabaseEpoch() + ",count("+keyColumn+"), sum("+keyColumn+") from "+table);
 				if(conn.hasMoreElements()) {
 					Object o = conn.nextElement();
 					if(o instanceof String[]) {
@@ -187,6 +187,8 @@ public class DatabaseView extends DatabaseSubMenu {
 	}
 
 	
+	protected abstract RecordSetConnection queryDatabase(HttpApi api, String query) throws IOException;
+
 	private class FillingThread extends Thread
 	{
 		boolean exit = false;
@@ -227,7 +229,7 @@ public class DatabaseView extends DatabaseSubMenu {
 		{
 			RecordSetConnection conn = null;
 			try {
-				conn = api.queryVideoDatabase(constructQuery());
+				conn = queryDatabase(api, constructQuery());
 				int i=0;
 				while(conn.hasMoreElements()) {
 					Object o = conn.nextElement();
@@ -246,7 +248,7 @@ public class DatabaseView extends DatabaseSubMenu {
 
 			}
 		}
-
+		
 		void shutdown()
 		{
 			exit = true;

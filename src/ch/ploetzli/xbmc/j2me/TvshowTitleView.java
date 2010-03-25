@@ -4,7 +4,7 @@ import javax.microedition.lcdui.Image;
 
 import ch.ploetzli.xbmc.Logger;
 
-public class TvshowTitleView extends DatabaseView {
+public class TvshowTitleView extends VideoDatabaseView {
 	public static DatabaseView get(String name) {
 		return get(name, null);
 	}

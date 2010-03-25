@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import ch.ploetzli.xbmc.api.HttpApi;
 
-public class MovieTitleView extends DatabaseView {
+public class MovieTitleView extends VideoDatabaseView {
 	public static DatabaseView get(String name) {
 		return get(name, null);
 	}
