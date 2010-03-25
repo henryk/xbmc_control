@@ -156,6 +156,11 @@ public class XbmcPoc extends MIDlet implements CommandListener, MdnsDiscovererLi
 						TvshowTitleView.get("Title"),
 						TvshowYearView.get("Year"),
 				}),
+				new SubMenu("Music", new SubMenu[]{
+						MusicGenreView.get("Genre"),
+						MusicArtistView.get("Artist"),
+						MusicAlbumView.get("Album"),
+				}),
 				new DebugView("Debug"),
 		});
 		
