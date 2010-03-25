@@ -114,7 +114,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
-	Font font = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_BOLD , Font.SIZE_MEDIUM);
+	Font font = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_PLAIN , Font.SIZE_MEDIUM);
 	
 	protected abstract class GUIElement {
 		protected boolean dirty = false;
@@ -227,7 +227,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	protected class FileThumb extends StringGUIElement {
 		Image thumb = null;
-		static final double maxWidthFactor = 0.4;
+		static final double maxWidthFactor = 0.45;
 		static final double maxHeightFactor = 0.42;
 		
 		public FileThumb() {super();}
@@ -339,36 +339,69 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
-	protected class SeasonArtistLabel extends StringGUIElement {
-		public SeasonArtistLabel() { super(); }
+	protected class SeasonLabel extends StringGUIElement {
+		public SeasonLabel() { super(); }
 		
 		public String[] getFieldNames() {
-			return new String[]{"Season", "Episode", "Artist", "Album"};
+			return new String[]{"Season", "Episode"};
 		}
 
 		public void fetch(HttpApi api, int width, int height) {
 		}
 
 		public void paint(Graphics g, int width, int height) {
-			Vector toDraw = new Vector();
-			for(int i = value.length-1; i>=0; i--) {
-				if(value[i] != null) {
-					toDraw.addElement(fields[i]+": "+value[i]);
-				}
-			}
-			
-			if(toDraw.size() > 0) {
+			if(value[0] != null || value[1] != null) {
 				g.setColor(160, 160, 180);
 				g.setFont(font);
 				int yPos = height-25-2*font.getHeight(); /* bottom - 10px border - 15px progress bar - title label - time label */
 				int xPos = (int) (10 + width*FileThumb.maxWidthFactor + 5); /* left + 10px border + maximum file thumb width + 5px space */
-				for(int i=0; i<toDraw.size(); i++) {
-					g.drawString((String) toDraw.elementAt(i), xPos, yPos, Graphics.LEFT | Graphics.BOTTOM);
+				
+				if(value[1] != null) {
+					g.drawString((String) "Episode: "+value[1], xPos, yPos, Graphics.LEFT | Graphics.BOTTOM);
 					yPos -= font.getHeight();
 				}
+				
+				if(value[0] != null) {
+					g.drawString((String) "Season: "+value[0], xPos, yPos, Graphics.LEFT | Graphics.BOTTOM);
+					yPos -= font.getHeight();
+				}
+				
 			}
 		}
+	}
+	
+	protected class ArtistLabel extends StringGUIElement {
+		Font artistFont = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_BOLD , Font.SIZE_SMALL);
+		Font albumFont = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_PLAIN , Font.SIZE_MEDIUM);
+		public ArtistLabel() { super(); }
 		
+		public String[] getFieldNames() {
+			return new String[]{"Artist", "Album"};
+		}
+
+		public void fetch(HttpApi api, int width, int height) {
+		}
+
+		public void paint(Graphics g, int width, int height) {
+			if(value[0] != null || value[1] != null) {
+				g.setColor(160, 160, 180);
+				int yPos = height-25-2*font.getHeight(); /* bottom - 10px border - 15px progress bar - title label - time label */
+				int xPos = (int) (10 + width*FileThumb.maxWidthFactor + 5); /* left + 10px border + maximum file thumb width + 5px space */
+				
+				if(value[1] != null) {
+					g.setFont(albumFont);
+					g.drawString((String) value[1], xPos, yPos, Graphics.LEFT | Graphics.BOTTOM);
+					yPos -= albumFont.getHeight();
+				}
+				
+				if(value[0] != null) {
+					g.setFont(artistFont);
+					g.drawString((String) value[0], xPos, yPos, Graphics.LEFT | Graphics.BOTTOM);
+					yPos -= artistFont.getHeight();
+				}
+				
+			}
+		}
 	}
 	
 	protected class TimeLabel extends StringGUIElement {
@@ -393,7 +426,6 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 				g.drawString(buf.toString(), width-10, height-25-font.getHeight(), Graphics.RIGHT | Graphics.BOTTOM);
 			}
 		}
-		
 	}
 	
 	protected class RemoteControlCanvas extends GameCanvas implements Runnable {
@@ -409,7 +441,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			guiElements.addElement(new FileThumb());
 			guiElements.addElement(new PlaybackProgress());
 			guiElements.addElement(new TimeLabel());
-			guiElements.addElement(new SeasonArtistLabel());
+			guiElements.addElement(new SeasonLabel());
+			guiElements.addElement(new ArtistLabel());
 			guiElements.addElement(new TitleLabel());
 		}
 		
