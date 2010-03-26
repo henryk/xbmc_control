@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Vector;
 
-import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Font;
@@ -27,9 +26,14 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	static final int KEY_BUTTON_DPAD_LEFT = 272;
 	static final int KEY_BUTTON_DPAD_RIGHT = 273;
 	static Command tabCommand = new Command("Tab", Command.ITEM, 20);
-	private RemoteControlCanvas dataCanvas = null;
-	private ScreenshotCanvas screenCanvas = null;
+	static Command startScreenshotCommand = new Command("Enable screenhots", Command.ITEM, 5);
+	static Command stopScreenshotCommand = new Command("Stop screenshots", Command.ITEM, 5);
+	private RemoteControlCanvas canvas = null;
 	private boolean screenshotMode = false;
+	private ScreenshotFetcher fetcher = null;
+	private Image screenshot = null;
+	private boolean paused = true;
+	private int canvasWidth, canvasHeight;
 	
 	public RemoteControl(String name) {
 		super(name);
@@ -38,38 +42,70 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	protected Displayable constructDisplayable() {
 		synchronized(this) {
-			if(screenshotMode) {
-				if(screenCanvas == null) {
-					screenCanvas = new ScreenshotCanvas(name);
-					addPrivateCommands(screenCanvas);
-					screenCanvas.setCommandListener(this);
-				}
-				return screenCanvas;
-			} else {
-				if(dataCanvas == null) {
-					dataCanvas = new RemoteControlCanvas(name);
-					addPrivateCommands(dataCanvas);
-					dataCanvas.setCommandListener(this);
-				}
-				return dataCanvas;
+			if(canvas == null) {
+				canvas = new RemoteControlCanvas(name);
+				addPrivateCommands(canvas);
+				canvas.setCommandListener(this);
 			}
 		}
+		return canvas;
 	}
 	
-	protected void addPrivateCommands(Displayable d) {
+	protected synchronized void addPrivateCommands(Displayable d) {
 		d.addCommand(tabCommand);
+		if(!screenshotMode) {
+			d.addCommand(startScreenshotCommand);
+		} else {
+			d.addCommand(stopScreenshotCommand);
+		}
 		super.addPrivateCommands(d);
 	}
 	
 	public void commandAction(Command cmd, Displayable d) {
 		if(cmd == tabCommand) {
 			sendKey(0xF009);
+		} else if(cmd == startScreenshotCommand) {
+			setScreenshotMode(true);
+		} else if(cmd == stopScreenshotCommand) {
+			setScreenshotMode(false);
 		} else {
 			super.commandAction(cmd, d);
 		}
 	}
 	
+	private synchronized void setScreenshotMode(boolean screenshotMode) {
+		if(screenshotMode == this.screenshotMode) 
+			return; /* Nothing to do */
+		
+		if(canvas != null) {
+			if(this.screenshotMode)
+				canvas.removeCommand(stopScreenshotCommand);
+			else
+				canvas.removeCommand(startScreenshotCommand);
+		}
+		
+		this.screenshotMode = screenshotMode;
+
+		if(screenshotMode)
+			canvas.addCommand(stopScreenshotCommand);
+		else
+			canvas.addCommand(startScreenshotCommand);
+
+		if(fetcher != null) {
+			fetcher.exit = true;
+		}
+		
+		if(screenshotMode) {
+			fetcher = new ScreenshotFetcher();
+			fetcher.start();
+		}
+	}
+	
 	public void sendKey(final int buttoncode) {
+		if(fetcher != null) {
+			fetcher.keyPressed();
+		}
+		
 		final HttpApi api = getApi();
 		new Thread() {
 			public void run() {
@@ -93,17 +129,19 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	public void stateSynchronized() {
-		if(dataCanvas == null)
+		if(canvas == null)
 			constructDisplayable();
-		if(dataCanvas != null)
-			dataCanvas.refresh();
+		if(fetcher != null)
+			fetcher.singleUpdate();
+		if(canvas != null)
+			canvas.refresh();
 	}
 
 	public void valueChanged(String property, String newValue) {
-		if(dataCanvas == null)
+		if(canvas == null)
 			constructDisplayable();
-		if(dataCanvas != null)
-			dataCanvas.setValue(property, newValue);
+		if(canvas != null)
+			canvas.setValue(property, newValue);
 	}
 	
 	private void unpause() {
@@ -111,6 +149,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		if(api != null) {
 			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_TIME);
 		}
+		paused = false;
 	}
 	
 	private void pause() {
@@ -118,6 +157,72 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		if(api != null) {
 			api.getStateMonitor().registerListener(this, StateMonitor.INTEREST_BASIC);
 		}
+		paused = true;
+	}
+	
+	protected class ScreenshotFetcher extends Thread {
+		private long lastKeypress = 0;
+		private long screenshotDelay = 1000;
+		boolean exit = false;
+		
+		public void run() {
+			HttpApi api = getApi();
+			if(api == null)
+				return;
+			while(!exit) {
+				synchronized(this) {
+					if(!paused) {
+						if(api != null) {
+							try {
+								int w = canvasWidth, h = canvasHeight;
+								h = (w*9)/16; /* FIXME Fetch and use aspect ratio from HTTP API */
+								byte data[] = api.takeScreenshot("special://temp/screen.jpg", false, 0, w, h, 50);
+								screenshot = Image.createImage(data, 0, data.length);
+							} catch (Exception e) {
+								Logger.getLogger().error(e);
+								e.printStackTrace();
+							}
+							if(canvas != null)
+								canvas.drawScreenshot();
+						}
+					}
+					
+					long sinceLastKeypress = System.currentTimeMillis()-lastKeypress;
+					if(sinceLastKeypress < 1000) {
+						/* Don't touch delay */
+					} else if(sinceLastKeypress < 5000) {
+						screenshotDelay = 250;
+					} else if(sinceLastKeypress < 10000) {
+						screenshotDelay = 1000;
+					} else if(sinceLastKeypress < 20000) {
+						screenshotDelay = 5000;
+					} else {
+						screenshotDelay = 10000;
+					}
+					
+					System.out.println(screenshotDelay);
+					try {
+						this.wait(screenshotDelay);
+					} catch (InterruptedException e) {;}
+				}
+				
+			}
+		}
+		
+		public void singleUpdate() {
+			synchronized(this) {
+				this.notify();
+			}
+		}
+
+		public void keyPressed() {
+			synchronized(this) {
+				lastKeypress = System.currentTimeMillis();
+				screenshotDelay = 100;
+				this.notify();
+			}
+		}
+		
 	}
 	
 	Font font = Font.getFont(Font.FACE_PROPORTIONAL, Font.STYLE_PLAIN , Font.SIZE_MEDIUM);
@@ -455,31 +560,49 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		public void run() {
 			synchronized(this) {
 				if(shown) {
-					if(dirty) {
-						dirty = false;
-						int height = getHeight();
-						int width = getWidth();
-						Graphics g = getGraphics();
-						HttpApi api = getApi();
-						
-						drawBackground(width, height);
-						
-						try {
-							for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
-								GUIElement element = (GUIElement) e.nextElement();
-								element.fetch(api, width, height);
-								element.paint(g, width, height);
-								dirty = dirty || element.getDirty();
-							}
-						} catch(Exception e) {
-							Logger.getLogger().error(e);
-							e.printStackTrace();
-						}
-
-						flushGraphics();
+					if(screenshotMode) {
+						drawScreenshot();
+					} else {
+						drawElements();
 					}
 				}
 
+			}
+		}
+
+		private synchronized void drawScreenshot() {
+			int height = getHeight();
+			int width = getWidth();
+			Graphics g = getGraphics();
+			g.setColor(0);
+			g.fillRect(0, 0, width, height);
+			g.drawImage(screenshot, width/2, height/2, Graphics.HCENTER | Graphics.VCENTER);
+			flushGraphics();
+		}
+
+		private void drawElements() {
+			if(dirty) {
+				dirty = false;
+				int height = getHeight();
+				int width = getWidth();
+				Graphics g = getGraphics();
+				HttpApi api = getApi();
+				
+				drawBackground(width, height);
+				
+				try {
+					for(Enumeration e = guiElements.elements(); e.hasMoreElements(); ) {
+						GUIElement element = (GUIElement) e.nextElement();
+						element.fetch(api, width, height);
+						element.paint(g, width, height);
+						dirty = dirty || element.getDirty();
+					}
+				} catch(Exception e) {
+					Logger.getLogger().error(e);
+					e.printStackTrace();
+				}
+
+				flushGraphics();
 			}
 		}
 		
@@ -516,6 +639,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		protected void sizeChanged(int w, int h) {
+			canvasWidth = getWidth();
+			canvasHeight = getHeight();
 			Logger.getLogger().info("sizeChanged");
 			synchronized(this) {
 				try {
@@ -543,6 +668,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		
 		protected void showNotify() {
 			Logger.getLogger().info("showNotify");
+			canvasWidth = getWidth();
+			canvasHeight = getHeight();
 			unpause();
 			synchronized(this) {
 				shown = true;
@@ -588,84 +715,5 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			actOnKey(keyCode);
 			super.keyRepeated(keyCode);
 		}
-	}
-
-	protected class ScreenshotCanvas extends Canvas implements Runnable {
-		private Thread fetchThread;
-		private Image img = null;
-
-		public ScreenshotCanvas(String name) {
-			super();
-			setTitle(name);
-			this.fetchThread = new Thread(this);
-			this.fetchThread.start();
-		}
-
-		public void run() {
-			while(true) {
-				synchronized(this) {
-					if(isShown()) {
-					HttpApi api = getApi();
-						if(api != null) {
-							try {
-								byte data[] = api.takeScreenshot("special://temp/screen.jpg", false, 0, getWidth(), getHeight(), 90);
-								img = Image.createImage(data, 0, data.length);
-							} catch (Exception e) {
-								Logger.getLogger().error(e);
-								e.printStackTrace();
-							}
-						}
-					}
-					repaint();
-					try {
-						this.wait(1000);
-					} catch (InterruptedException e) {;}
-				}
-			}
-		}
-
-		protected void paint(Graphics g) {
-			Image i = img;
-			if(i == null) {
-				g.setColor(0, 0, 255);
-				g.fillRect(0, 0, getWidth(), getHeight());
-			} else {
-				g.drawImage(i, 0, 0, Graphics.TOP | Graphics.LEFT);
-			}
-		}
-		
-		private void actOnKey(int keyCode) {
-			setTitle(Integer.toString(keyCode));
-			if(getGameAction(keyCode) == FIRE) {
-				sendKey(KEY_BUTTON_A);
-			} else if(getGameAction(keyCode) == UP) {
-				sendKey(KEY_BUTTON_DPAD_UP);
-			} else if(getGameAction(keyCode) == DOWN) {
-				sendKey(KEY_BUTTON_DPAD_DOWN);
-			} else if(getGameAction(keyCode) == LEFT) {
-				sendKey(KEY_BUTTON_DPAD_LEFT);
-			} else if(getGameAction(keyCode) == RIGHT) {
-				sendKey(KEY_BUTTON_DPAD_RIGHT);
-			} else {
-				if( (keyCode >= 'a' && keyCode <= 'z')) {
-					/* For ASCII characters the interface wants uppercase,
-					 * even though that isn't mentioned in the documentation anywhere
-					 */
-					sendKey(0xF100 + keyCode - 'a' + 'A');
-				} else if( (keyCode > 0 && keyCode <= 127) ) {
-					sendKey(0xF000 + keyCode);
-				}
-			}
-		}
-		
-		protected void keyReleased(int keyCode) {
-			actOnKey(keyCode);
-			super.keyReleased(keyCode);
-		}
-		protected void keyRepeated(int keyCode) {
-			actOnKey(keyCode);
-			super.keyRepeated(keyCode);
-		}
-		
 	}
 }

@@ -254,7 +254,7 @@ public class HttpApi {
 		if(result[1] != SIMPLE_COMMAND_TOKENS[1]) 
 			throw new IOException("Invalid response format, was expecting </html>");
 		
-		return org.kobjects.base64.Base64.decode(new String(result[0]));
+		return org.kobjects.base64.Base64.decode(result[0]);
 	}
 
 }

@@ -92,7 +92,7 @@ public class Base64 {
         return buf;
     }
 
-    static int decode(char c) {
+    static int decode(byte c) {
         if (c >= 'A' && c <= 'Z')
             return ((int) c) - 65;
         else if (c >= 'a' && c <= 'z')
@@ -115,8 +115,11 @@ public class Base64 {
 
     /** Decodes the given Base64 encoded String to a new byte array. 
     The byte array holding the decoded data is returned. */
-
     public static byte[] decode(String s) {
+    	return decode(s.getBytes());
+    }
+
+    public static byte[] decode(byte[] s) {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
@@ -128,30 +131,30 @@ public class Base64 {
         return bos.toByteArray();
     }
 
-    public static void decode(String s, OutputStream os)
+    public static void decode(byte b[], OutputStream os)
         throws IOException {
         int i = 0;
 
-        int len = s.length();
+        int len = b.length;
 
         while (true) {
-            while (i < len && s.charAt(i) <= ' ')
+            while (i < len && b[i] <= ' ')
                 i++;
 
             if (i == len)
                 break;
 
             int tri =
-                (decode(s.charAt(i)) << 18)
-                    + (decode(s.charAt(i + 1)) << 12)
-                    + (decode(s.charAt(i + 2)) << 6)
-                    + (decode(s.charAt(i + 3)));
+                (decode(b[i]) << 18)
+                    + (decode(b[i + 1]) << 12)
+                    + (decode(b[i + 2]) << 6)
+                    + (decode(b[i + 3]));
 
             os.write((tri >> 16) & 255);
-            if (s.charAt(i + 2) == '=')
+            if (b[i + 2] == '=')
                 break;
             os.write((tri >> 8) & 255);
-            if (s.charAt(i + 3) == '=')
+            if (b[i + 3] == '=')
                 break;
             os.write(tri & 255);
 
