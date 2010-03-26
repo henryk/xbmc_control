@@ -9,11 +9,19 @@ import javax.microedition.io.*;
 import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 
+/**
+ * A (very thin) abstraction of the XBMC HTTP-API. This class is inherently
+ * thread-safe since there is no mutable state. All methods only have local
+ * state and either return final results or an accessor object for an ongoing
+ * connection.
+ * @author henryk
+ *
+ */
 public class HttpApi {
-	private String baseurl;
-	private String name;
-	private StateMonitor stateMonitor;
-	private BroadcastMonitor broadcastMonitor;
+	private final String baseurl;
+	private final String name;
+	private final StateMonitor stateMonitor;
+	private final BroadcastMonitor broadcastMonitor;
 	
 	public HttpApi(String displayName, String address, int port)
 	{
@@ -45,6 +53,12 @@ public class HttpApi {
 		return conn;
 	}
 	
+	/* The individual items are separated by <li>, 
+	 * input ends with </html> */
+	protected final static byte[][] SIMPLE_COMMAND_TOKENS = new byte[][]{
+		"<li>".getBytes(), 
+		"</html>".getBytes()
+	};
 	public String[] simpleCommand(String cmd, boolean stripSpaces) throws IOException
 	{
 		HttpConnection conn = openCommandConnection(cmd);
@@ -54,16 +68,13 @@ public class HttpApi {
 		/* All responses start with <html>, so match that and bail in case of mismatch */
 		Utils.assertRead(is, "<html>");
 		
-		/* The individual items are separated by <li>, 
-		 * input ends with </html> */
-		final byte[][] tokens = new byte[][]{"<li>".getBytes(), "</html>".getBytes()};
 		try {
 			boolean keepGoing = true;
 			boolean first = true;
 			boolean hadone = false;
 			do {
-				byte r[][] = Utils.findRead(is, tokens);
-				if(r[1] == tokens[0]) {
+				byte r[][] = Utils.findRead(is, SIMPLE_COMMAND_TOKENS);
+				if(r[1] == SIMPLE_COMMAND_TOKENS[0]) {
 					hadone = true;
 					if(first) {
 						/* Ignore the text before the first <li> */
@@ -107,7 +118,24 @@ public class HttpApi {
 	{
 		return simpleCommand(cmd, false);
 	}
-	
+
+	public void simpleCommandIgnoreResponse(String cmd) throws IOException
+	{
+		HttpConnection conn = openCommandConnection(cmd);
+		InputStream is = conn.openInputStream();
+		
+		/* All responses start with <html>, so match that and bail in case of mismatch */
+		Utils.assertRead(is, "<html>");
+		
+		/* Read and ignore the rest of the response. In principle it should be ok to just
+		 * close the connection, but I don't know how the webserver will react.
+		 */
+		try {
+			while(is.read() != -1) ;
+		} finally {
+			conn.close();
+		}
+	}
 	public RecordSetConnection databaseCommand(String cmd, String enc) throws IOException
 	{
 		HttpConnection conn = openCommandConnection(cmd);
@@ -151,7 +179,7 @@ public class HttpApi {
 	
 	public void setBroadcast(int setting, int broadcastPort) throws IOException 
 	{
-		simpleCommand("SetBroadcast("+setting+";"+broadcastPort+")");
+		simpleCommandIgnoreResponse("SetBroadcast("+setting+";"+broadcastPort+")");
 	}
 	
 	public byte[] fileDownload(String url) throws IOException
@@ -171,7 +199,7 @@ public class HttpApi {
 	}
 
 	public void sendKey(int buttoncode) throws IOException {
-		simpleCommand("SendKey("+buttoncode+")");
+		simpleCommandIgnoreResponse("SendKey("+buttoncode+")");
 	}
 
 	public StateMonitor getStateMonitor() {
@@ -187,27 +215,27 @@ public class HttpApi {
 	}
 
 	public void addToPlayListFromDB(String type, String whereClause) throws IOException {
-		simpleCommand("AddToPlayListFromDB("+type+";"+whereClause+")");
+		simpleCommandIgnoreResponse("AddToPlayListFromDB("+type+";"+whereClause+")");
 	}
 
 	public void clearPlayList(int i) throws IOException {
-		simpleCommand("ClearPlayList("+i+")");
+		simpleCommandIgnoreResponse("ClearPlayList("+i+")");
 	}
 
 	public void setCurrentPlayList(int i) throws IOException {
-		simpleCommand("SetCurrentPlayList("+i+")");
+		simpleCommandIgnoreResponse("SetCurrentPlayList("+i+")");
 	}
 
 	public void playNext() throws IOException {
-		simpleCommand("PlayNext()");
+		simpleCommandIgnoreResponse("PlayNext()");
 	}
 
 	public void addToPlayList(String filePath) throws IOException {
-		simpleCommand("AddToPlayList("+filePath+")");
+		simpleCommandIgnoreResponse("AddToPlayList("+filePath+")");
 	}
 
 	public void setPlayListSong(int i) throws IOException {
-		simpleCommand("SetPlayListSong("+i+")");
+		simpleCommandIgnoreResponse("SetPlayListSong("+i+")");
 	}
 
 }
