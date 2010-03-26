@@ -238,4 +238,23 @@ public class HttpApi {
 		simpleCommandIgnoreResponse("SetPlayListSong("+i+")");
 	}
 
+	public byte[] takeScreenshot(String filename, boolean flash, int rotation, int width,
+			int height, int quality) throws IOException {
+		HttpConnection conn = openCommandConnection("TakeScreenshot("+filename+";"+flash+";"+rotation+";"+width+";"+height+";"+quality+";true)");
+		InputStream is = conn.openInputStream();
+		
+		byte[][] result;
+		try {
+			Utils.assertRead(is, "<html>");
+			result = Utils.findRead(is, SIMPLE_COMMAND_TOKENS);
+		} finally {
+			conn.close();
+		}
+		
+		if(result[1] != SIMPLE_COMMAND_TOKENS[1]) 
+			throw new IOException("Invalid response format, was expecting </html>");
+		
+		return org.kobjects.base64.Base64.decode(new String(result[0]));
+	}
+
 }

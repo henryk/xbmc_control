@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import javax.microedition.lcdui.Canvas;
 import javax.microedition.lcdui.Command;
 import javax.microedition.lcdui.Displayable;
 import javax.microedition.lcdui.Font;
@@ -25,8 +26,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	static final int KEY_BUTTON_DPAD_DOWN = 271;
 	static final int KEY_BUTTON_DPAD_LEFT = 272;
 	static final int KEY_BUTTON_DPAD_RIGHT = 273;
-	static Command tabCommand = new Command("Tab", Command.ITEM, 10);
-	private RemoteControlCanvas canvas = null;
+	static Command tabCommand = new Command("Tab", Command.ITEM, 20);
+	private RemoteControlCanvas dataCanvas = null;
+	private ScreenshotCanvas screenCanvas = null;
+	private boolean screenshotMode = false;
 	
 	public RemoteControl(String name) {
 		super(name);
@@ -35,13 +38,22 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 
 	protected Displayable constructDisplayable() {
 		synchronized(this) {
-			if(canvas == null) {
-				canvas = new RemoteControlCanvas(name);
-				addPrivateCommands(canvas);
-				canvas.setCommandListener(this);
+			if(screenshotMode) {
+				if(screenCanvas == null) {
+					screenCanvas = new ScreenshotCanvas(name);
+					addPrivateCommands(screenCanvas);
+					screenCanvas.setCommandListener(this);
+				}
+				return screenCanvas;
+			} else {
+				if(dataCanvas == null) {
+					dataCanvas = new RemoteControlCanvas(name);
+					addPrivateCommands(dataCanvas);
+					dataCanvas.setCommandListener(this);
+				}
+				return dataCanvas;
 			}
 		}
-		return canvas;
 	}
 	
 	protected void addPrivateCommands(Displayable d) {
@@ -81,17 +93,17 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	}
 	
 	public void stateSynchronized() {
-		if(canvas == null)
+		if(dataCanvas == null)
 			constructDisplayable();
-		if(canvas != null)
-			canvas.refresh();
+		if(dataCanvas != null)
+			dataCanvas.refresh();
 	}
 
 	public void valueChanged(String property, String newValue) {
-		if(canvas == null)
+		if(dataCanvas == null)
 			constructDisplayable();
-		if(canvas != null)
-			canvas.setValue(property, newValue);
+		if(dataCanvas != null)
+			dataCanvas.setValue(property, newValue);
 	}
 	
 	private void unpause() {
@@ -578,4 +590,82 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 
+	protected class ScreenshotCanvas extends Canvas implements Runnable {
+		private Thread fetchThread;
+		private Image img = null;
+
+		public ScreenshotCanvas(String name) {
+			super();
+			setTitle(name);
+			this.fetchThread = new Thread(this);
+			this.fetchThread.start();
+		}
+
+		public void run() {
+			while(true) {
+				synchronized(this) {
+					if(isShown()) {
+					HttpApi api = getApi();
+						if(api != null) {
+							try {
+								byte data[] = api.takeScreenshot("special://temp/screen.jpg", false, 0, getWidth(), getHeight(), 90);
+								img = Image.createImage(data, 0, data.length);
+							} catch (Exception e) {
+								Logger.getLogger().error(e);
+								e.printStackTrace();
+							}
+						}
+					}
+					repaint();
+					try {
+						this.wait(1000);
+					} catch (InterruptedException e) {;}
+				}
+			}
+		}
+
+		protected void paint(Graphics g) {
+			Image i = img;
+			if(i == null) {
+				g.setColor(0, 0, 255);
+				g.fillRect(0, 0, getWidth(), getHeight());
+			} else {
+				g.drawImage(i, 0, 0, Graphics.TOP | Graphics.LEFT);
+			}
+		}
+		
+		private void actOnKey(int keyCode) {
+			setTitle(Integer.toString(keyCode));
+			if(getGameAction(keyCode) == FIRE) {
+				sendKey(KEY_BUTTON_A);
+			} else if(getGameAction(keyCode) == UP) {
+				sendKey(KEY_BUTTON_DPAD_UP);
+			} else if(getGameAction(keyCode) == DOWN) {
+				sendKey(KEY_BUTTON_DPAD_DOWN);
+			} else if(getGameAction(keyCode) == LEFT) {
+				sendKey(KEY_BUTTON_DPAD_LEFT);
+			} else if(getGameAction(keyCode) == RIGHT) {
+				sendKey(KEY_BUTTON_DPAD_RIGHT);
+			} else {
+				if( (keyCode >= 'a' && keyCode <= 'z')) {
+					/* For ASCII characters the interface wants uppercase,
+					 * even though that isn't mentioned in the documentation anywhere
+					 */
+					sendKey(0xF100 + keyCode - 'a' + 'A');
+				} else if( (keyCode > 0 && keyCode <= 127) ) {
+					sendKey(0xF000 + keyCode);
+				}
+			}
+		}
+		
+		protected void keyReleased(int keyCode) {
+			actOnKey(keyCode);
+			super.keyReleased(keyCode);
+		}
+		protected void keyRepeated(int keyCode) {
+			actOnKey(keyCode);
+			super.keyRepeated(keyCode);
+		}
+		
+	}
 }
