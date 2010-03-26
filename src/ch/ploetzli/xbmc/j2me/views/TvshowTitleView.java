@@ -1,8 +1,9 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc.j2me.views;
 
 import javax.microedition.lcdui.Image;
 
 import ch.ploetzli.xbmc.Logger;
+import ch.ploetzli.xbmc.j2me.ImageFactory;
 
 public class TvshowTitleView extends VideoDatabaseView {
 	public static DatabaseView get(String name) {

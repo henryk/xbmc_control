@@ -1,9 +1,12 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc.j2me.views;
 
 import javax.microedition.lcdui.Image;
 
 import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.api.HttpApi;
+import ch.ploetzli.xbmc.j2me.DatabaseTopMenu;
+import ch.ploetzli.xbmc.j2me.ImageFactory;
+import ch.ploetzli.xbmc.j2me.RemoteControl;
 
 public class TvshowEpisodeView extends VideoDatabaseView {
 	

@@ -1,4 +1,4 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc.j2me.views;
 
 public class MusicAlbumView extends MusicDatabaseView {
 	public static DatabaseView get(String name) {

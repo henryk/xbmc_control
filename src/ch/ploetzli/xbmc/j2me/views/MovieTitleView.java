@@ -1,8 +1,10 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc.j2me.views;
 
 import java.io.IOException;
 
 import ch.ploetzli.xbmc.api.HttpApi;
+import ch.ploetzli.xbmc.j2me.DatabaseTopMenu;
+import ch.ploetzli.xbmc.j2me.RemoteControl;
 
 public class MovieTitleView extends VideoDatabaseView {
 	public static DatabaseView get(String name) {

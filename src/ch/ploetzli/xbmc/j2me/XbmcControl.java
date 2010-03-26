@@ -10,6 +10,15 @@ import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscoverer;
 import ch.ploetzli.xbmc.api.mdns.MdnsDiscovererListener;
+import ch.ploetzli.xbmc.j2me.views.MovieGenreView;
+import ch.ploetzli.xbmc.j2me.views.MovieTitleView;
+import ch.ploetzli.xbmc.j2me.views.MovieYearView;
+import ch.ploetzli.xbmc.j2me.views.MusicAlbumView;
+import ch.ploetzli.xbmc.j2me.views.MusicArtistView;
+import ch.ploetzli.xbmc.j2me.views.MusicGenreView;
+import ch.ploetzli.xbmc.j2me.views.TvshowGenreView;
+import ch.ploetzli.xbmc.j2me.views.TvshowTitleView;
+import ch.ploetzli.xbmc.j2me.views.TvshowYearView;
 
 public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscovererListener {
 

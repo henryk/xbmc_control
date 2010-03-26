@@ -1,4 +1,4 @@
-package ch.ploetzli.xbmc.j2me;
+package ch.ploetzli.xbmc.j2me.views;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -13,6 +13,9 @@ import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.Utils;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.api.RecordSetConnection;
+import ch.ploetzli.xbmc.j2me.DatabaseSubMenu;
+import ch.ploetzli.xbmc.j2me.DatabaseTopMenu;
+import ch.ploetzli.xbmc.j2me.SubMenu;
 
 /**
  * This class is a menu that represents some database derived view, e.g.
