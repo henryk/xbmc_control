@@ -22,8 +22,8 @@ public class Logger {
 		System.err.println(s);
 	}
 
-	public void info(Exception e) { info(e.toString()); }
-	public void error(Exception e) { error(e.toString()); }
+	public void info(Exception e) { info(e.toString()); e.printStackTrace(); }
+	public void error(Exception e) { error(e.toString()); e.printStackTrace(); }
 
 	public static synchronized void overrideLogger(Logger l) {
 		if(l != null) {

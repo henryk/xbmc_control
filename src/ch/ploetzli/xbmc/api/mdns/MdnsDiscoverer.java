@@ -93,9 +93,12 @@ public class MdnsDiscoverer {
 					d.reset();
 					d.setLength(max);
 				}
-			} catch(Exception e) { /* Must be a class that includes InterruptedException and not only IOException */
-				/* Ignore and exit */
-				Logger.getLogger().error(e);
+			} catch(Exception e) {
+				if(e instanceof InterruptedException) {
+					/* Ignore, is expected */
+				} else {
+					Logger.getLogger().error(e);
+				}
 			}
 		}
 
@@ -237,7 +240,11 @@ public class MdnsDiscoverer {
 						notifyListeners();
 					}
 				} catch(Exception e) {
-					Logger.getLogger().error(e);
+					if(e instanceof InterruptedException) {
+						/* Ignore, is expected */
+					} else {
+						Logger.getLogger().error(e);
+					}
 				}
 			}
 		}

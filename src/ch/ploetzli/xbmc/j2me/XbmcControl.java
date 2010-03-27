@@ -53,6 +53,9 @@ public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscover
 		this.display.setCurrent(this.deviceList);
 		try {
 			this.disc = new MdnsDiscoverer(this);
+			if(disc != null) {
+				deviceList.setTicker(new Ticker("Searching for devices ..."));
+			}
 		} catch(Exception e) {
 			Logger.getLogger().error(e);
 		}
