@@ -1,6 +1,5 @@
 package ch.ploetzli.xbmc.j2me;
 
-import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Vector;
 
@@ -111,7 +110,7 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 			public void run() {
 				try {
 					api.sendKey(buttoncode);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					Logger.getLogger().error(e);
 				}
 			}
@@ -166,47 +165,49 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		boolean exit = false;
 		
 		public void run() {
-			HttpApi api = getApi();
-			if(api == null)
-				return;
-			while(!exit) {
-				synchronized(this) {
-					if(!paused) {
-						if(api != null) {
-							try {
-								int w = canvasWidth, h = canvasHeight;
-								h = (w*9)/16; /* FIXME Fetch and use aspect ratio from HTTP API */
-								byte data[] = api.takeScreenshot("special://temp/screen.jpg", false, 0, w, h, 50);
-								screenshot = Image.createImage(data, 0, data.length);
-							} catch (Exception e) {
-								Logger.getLogger().error(e);
-								e.printStackTrace();
+			try {
+				HttpApi api = getApi();
+				if(api == null)
+					return;
+				while(!exit) {
+					synchronized(this) {
+						if(!paused) {
+							if(api != null) {
+								try {
+									int w = canvasWidth, h = canvasHeight;
+									h = (w*9)/16; /* FIXME Fetch and use aspect ratio from HTTP API */
+									byte data[] = api.takeScreenshot("special://temp/screen.jpg", false, 0, w, h, 50);
+									screenshot = Image.createImage(data, 0, data.length);
+								} catch (Exception e) {
+									Logger.getLogger().error(e);
+									e.printStackTrace();
+								}
+								if(canvas != null)
+									canvas.drawScreenshot();
 							}
-							if(canvas != null)
-								canvas.drawScreenshot();
 						}
+
+						long sinceLastKeypress = System.currentTimeMillis()-lastKeypress;
+						if(sinceLastKeypress < 1000) {
+							/* Don't touch delay */
+						} else if(sinceLastKeypress < 5000) {
+							screenshotDelay = 250;
+						} else if(sinceLastKeypress < 10000) {
+							screenshotDelay = 1000;
+						} else if(sinceLastKeypress < 20000) {
+							screenshotDelay = 5000;
+						} else {
+							screenshotDelay = 10000;
+						}
+
+						System.out.println(screenshotDelay);
+						try {
+							this.wait(screenshotDelay);
+						} catch (InterruptedException e) {;}
 					}
-					
-					long sinceLastKeypress = System.currentTimeMillis()-lastKeypress;
-					if(sinceLastKeypress < 1000) {
-						/* Don't touch delay */
-					} else if(sinceLastKeypress < 5000) {
-						screenshotDelay = 250;
-					} else if(sinceLastKeypress < 10000) {
-						screenshotDelay = 1000;
-					} else if(sinceLastKeypress < 20000) {
-						screenshotDelay = 5000;
-					} else {
-						screenshotDelay = 10000;
-					}
-					
-					System.out.println(screenshotDelay);
-					try {
-						this.wait(screenshotDelay);
-					} catch (InterruptedException e) {;}
+
 				}
-				
-			}
+			} catch(Exception e) { Logger.getLogger().error(e); }
 		}
 		
 		public void singleUpdate() {
@@ -558,16 +559,17 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 		
 		public void run() {
-			synchronized(this) {
-				if(shown) {
-					if(screenshotMode) {
-						drawScreenshot();
-					} else {
-						drawElements();
+			try {
+				synchronized(this) {
+					if(shown) {
+						if(screenshotMode) {
+							drawScreenshot();
+						} else {
+							drawElements();
+						}
 					}
 				}
-
-			}
+			} catch(Exception e) { Logger.getLogger().error(e); }
 		}
 
 		private synchronized void drawScreenshot() {

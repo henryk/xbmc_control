@@ -52,19 +52,21 @@ public class MdnsDiscoverer {
 		
 		public void run() 
 		{
-			while(!exit) {
-				try {
-					Datagram d = conn.newDatagram(query.length);
-					d.setData(query, 0, query.length);
-					conn.send(d);
-					
-					Thread.sleep(5000);
-				} catch(IOException e) {
-					/* Ignore */
-				} catch (InterruptedException e) {
-					/* Ignore */
+			try {
+				while(!exit) {
+					try {
+						Datagram d = conn.newDatagram(query.length);
+						d.setData(query, 0, query.length);
+						conn.send(d);
+
+						Thread.sleep(5000);
+					} catch(IOException e) {
+						/* Ignore */
+					} catch (InterruptedException e) {
+						/* Ignore */
+					}
 				}
-			}
+			} catch(Exception e) { Logger.getLogger().error(e); }
 		}
 	}
 	
@@ -93,6 +95,7 @@ public class MdnsDiscoverer {
 				}
 			} catch(Exception e) { /* Must be a class that includes InterruptedException and not only IOException */
 				/* Ignore and exit */
+				Logger.getLogger().error(e);
 			}
 		}
 
@@ -234,7 +237,7 @@ public class MdnsDiscoverer {
 						notifyListeners();
 					}
 				} catch(Exception e) {
-					/* Ignore */
+					Logger.getLogger().error(e);
 				}
 			}
 		}

@@ -78,18 +78,20 @@ public class StateMonitor extends Thread implements BroadcastListener {
 	}
 
 	public void run() {
-		api.getBroadcastMonitor().addListener(this, 1);
-		while(!exit) {
-			try {
-				synchronized(this) {
-					this.wait(pollDelay);
-					if(maxInterestLevel > 0 && !exit)
-						pollStatus();
+		try {
+			api.getBroadcastMonitor().addListener(this, 1);
+			while(!exit) {
+				try {
+					synchronized(this) {
+						this.wait(pollDelay);
+						if(maxInterestLevel > 0 && !exit)
+							pollStatus();
+					}
+				} catch (InterruptedException e) {
+					Logger.getLogger().info(e);
 				}
-			} catch (InterruptedException e) {
-				Logger.getLogger().info(e);
 			}
-		}
+		} catch(Exception e) { Logger.getLogger().error(e); }
 	}
 	
 	public synchronized void pollStatus() {

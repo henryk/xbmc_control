@@ -25,33 +25,32 @@ public class BroadcastMonitor extends Thread
 	
 	public void run()
 	{
-		final int max = 1200;
-		int port = enableBroadcast(0);
 		try {
-			if(port != -1)
-				conn = (DatagramConnection)Connector.open("datagram://:"+port);
-		} catch (IOException e) {
-			Logger.getLogger().error(e);
-		}
-		if(conn == null)
-			return;
-		
-		try {
+			final int max = 1200;
+			int port = enableBroadcast(0);
+			try {
+				if(port != -1)
+					conn = (DatagramConnection)Connector.open("datagram://:"+port);
+			} catch (IOException e) {
+				Logger.getLogger().error(e);
+			}
+			if(conn == null)
+				return;
+
 			Datagram d = conn.newDatagram(max);
 			while(!exit) {
 				conn.receive(d);
-				
+
 				processMessage(d);
-				
+
 				d.reset();
 				d.setLength(max);
 			}
-		} catch(Exception e) { /* Must be a class that includes InterruptedException and not only IOException */
-			/* Ignore and exit */
-			Logger.getLogger().error(e);
+		} catch(Exception e) { 
+			Logger.getLogger().error(e); 
 		}
 	}
-	
+
 	protected void processMessage(Datagram d)
 	{
 		String data = new String(d.getData(), 0, d.getLength());

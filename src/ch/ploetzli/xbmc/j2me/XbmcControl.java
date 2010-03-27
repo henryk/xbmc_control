@@ -1,5 +1,4 @@
 package ch.ploetzli.xbmc.j2me;
-import java.io.IOException;
 import java.util.Hashtable;
 
 import javax.microedition.lcdui.*;
@@ -54,8 +53,8 @@ public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscover
 		this.display.setCurrent(this.deviceList);
 		try {
 			this.disc = new MdnsDiscoverer(this);
-		} catch(IOException e) {
-			System.out.println(e);
+		} catch(Exception e) {
+			Logger.getLogger().error(e);
 		}
 	}
 
@@ -81,7 +80,9 @@ public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscover
 			new Thread(
 					new Runnable() {
 						public void run() {
-							doConnect(deviceList.getString(deviceList.getSelectedIndex()));
+							try {
+								doConnect(deviceList.getString(deviceList.getSelectedIndex()));
+							} catch(Exception e) { Logger.getLogger().error(e); }
 						}
 					}).start();
 		}

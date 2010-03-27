@@ -1,7 +1,6 @@
 package ch.ploetzli.xbmc.j2me.views;
 
-import java.io.IOException;
-
+import ch.ploetzli.xbmc.Logger;
 import ch.ploetzli.xbmc.api.HttpApi;
 import ch.ploetzli.xbmc.j2me.DatabaseTopMenu;
 import ch.ploetzli.xbmc.j2me.RemoteControl;
@@ -44,7 +43,7 @@ public class MovieTitleView extends VideoDatabaseView {
 					api.setPlayListSong(1);
 					if(rc != null)
 						showChild(rc);
-				} catch (IOException e) {;}
+				} catch (Exception e) { Logger.getLogger().error(e); }
 			}
 		}).start();
 	}
