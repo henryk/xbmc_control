@@ -156,25 +156,43 @@ public abstract class DatabaseView extends DatabaseSubMenu {
 	}
 
 	/**
+	 * Construct a query part to fetch the cache validator.
+	 * The default implementation returns count(keyColumn),sum(keyColumn)
+	 * which should be guaranteed to catch any deletion and insertion of
+	 * rows, since keys are strictly monotonic. Subclasses might override
+	 * this method to return more specific fields.
+	 * @return
+	 */
+	protected String constructCacheValidatorFields()
+	{
+		if(keyColumn == null)
+			return null;
+		return "count("+keyColumn+"), sum("+keyColumn+")";
+	}
+	
+	/**
 	 * Return our DatabaseView's cache validator.
-	 * The cache is protected by a validator that is sum() and count() over the
-	 * key column as well as a string representation of the database epoch. This
-	 * should be guaranteed to catch any deletion and insertion of rows, since
-	 * keys are strictly monotonic. Through the epoch it will also catch user
-	 * initiated cache invalidation.
+	 * The cache is protected by a validator (as specified by constructCacheValidatorFields),
+	 * the default is sum() and count() over the key column) as well as a string
+	 * representation of the database epoch. 
+	 * Through the epoch it will also catch user initiated cache invalidation.
 	 * @param topMenu A DatabaseTopMenu instance
 	 * @return false Array of String to be matched against the cacheValidator
 	 * 	instance variable.
 	 */
 	public String[] fetchCacheValidator(DatabaseTopMenu topMenu) throws IOException
 	{
+		String validatorFields = constructCacheValidatorFields();
+		if(validatorFields == null)
+			return null;
+		
 		RecordSetConnection conn = null;
 		String newValidator[] = null;
 		try {
 			HttpApi api = topMenu.getApi();
 			if(api != null) {
 				/* TODO Maybe include where clause? */
-				conn = queryDatabase(api, "select " + topMenu.getDatabaseEpoch() + ",count("+keyColumn+"), sum("+keyColumn+") from "+table);
+				conn = queryDatabase(api, "select " + topMenu.getDatabaseEpoch() + "," + validatorFields + " from "+table);
 				if(conn.hasMoreElements()) {
 					Object o = conn.nextElement();
 					if(o instanceof String[]) {

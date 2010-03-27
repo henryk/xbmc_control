@@ -18,6 +18,14 @@ public class TvshowTitleView extends VideoDatabaseView {
 		return get(TvshowTitleView.class, name, "tvshowview.idShow", new String[]{"c00", "tvshowview.totalcount", "tvshowview.watchedcount"}, table, "c00", null, whereClause);
 	}
 	
+	/* Additionally validate the cache using the total and watched number of episodes.
+	 */
+	protected String constructCacheValidatorFields() {
+		String fields = super.constructCacheValidatorFields();
+		if(fields == null) return fields;
+		return fields + ",sum(abs(tvshowview.totalcount)),sum(abs(tvshowview.watchedcount))";
+	}
+	
 	protected Object[] formatRow(int index, String[] data)
 	{
 		String label = "No label";

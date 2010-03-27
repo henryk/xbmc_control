@@ -14,6 +14,14 @@ public class TvshowEpisodeView extends VideoDatabaseView {
 		return get(TvshowEpisodeView.class, name, "episodeview.idEpisode", new String[]{"c00","c12","c13","playcount","strPath","strFileName"}, "episodeview", "abs(episodeview.c12),abs(episodeview.c13)", null, "episodeview.idShow="+idShow);
 	}
 
+	/* Additionally validate the cache using the playcount
+	 */
+	protected String constructCacheValidatorFields() {
+		String fields = super.constructCacheValidatorFields();
+		if(fields == null) return fields;
+		return fields + ",sum(abs(playcount))";
+	}
+	
 	protected Object[] formatRow(int index, String[] data)
 	{
 		String label = "No label";
