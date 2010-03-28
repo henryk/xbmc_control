@@ -202,6 +202,10 @@ public class HttpApi {
 		simpleCommandIgnoreResponse("SendKey("+buttoncode+")");
 	}
 
+	public void action(int code) throws IOException {
+		simpleCommandIgnoreResponse("Action("+code+")");
+	}
+
 	public StateMonitor getStateMonitor() {
 		return stateMonitor;
 	}

@@ -24,9 +24,11 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	static final int KEY_BUTTON_DPAD_DOWN = 271;
 	static final int KEY_BUTTON_DPAD_LEFT = 272;
 	static final int KEY_BUTTON_DPAD_RIGHT = 273;
-	static Command tabCommand = new Command("Tab", Command.ITEM, 20);
-	static Command startScreenshotCommand = new Command("Enable screenhots", Command.ITEM, 5);
-	static Command stopScreenshotCommand = new Command("Stop screenshots", Command.ITEM, 5);
+	static Command tabCommand = new Command("Send Tab", Command.SCREEN, 20);
+	static Command escapeCommand = new Command("Send Esc", Command.SCREEN, 20);
+	static Command smallStepBackCommand = new Command("Small step back", Command.SCREEN, 20);
+	static Command startScreenshotCommand = new Command("Enable screenhots", Command.SCREEN, 5);
+	static Command stopScreenshotCommand = new Command("Stop screenshots", Command.SCREEN, 5);
 	private RemoteControlCanvas canvas = null;
 	private boolean screenshotMode = false;
 	private ScreenshotFetcher fetcher = null;
@@ -52,6 +54,8 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	
 	protected synchronized void addPrivateCommands(Displayable d) {
 		d.addCommand(tabCommand);
+		d.addCommand(escapeCommand);
+		d.addCommand(smallStepBackCommand);
 		if(!screenshotMode) {
 			d.addCommand(startScreenshotCommand);
 		} else {
@@ -63,6 +67,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 	public void commandAction(Command cmd, Displayable d) {
 		if(cmd == tabCommand) {
 			sendKey(0xF009);
+		} else if(cmd == escapeCommand) {
+			sendKey(0xF01B);
+		} else if(cmd == smallStepBackCommand) {
+			sendAction(76);
 		} else if(cmd == startScreenshotCommand) {
 			setScreenshotMode(true);
 		} else if(cmd == stopScreenshotCommand) {
@@ -100,7 +108,20 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		}
 	}
 	
-	public void sendKey(final int buttoncode) {
+	public void sendKey(int buttoncode) {
+		send(buttoncode, true);
+	}
+	
+	public void sendAction(int code) {
+		send(code, false);
+	}
+	
+	/**
+	 * Send a key or action to the HTTP API.
+	 * @param code The code to send
+	 * @param sendKey If true, use SendKey(), otherwise use Action()
+	 */
+	public void send(final int code, final boolean sendKey) {
 		if(fetcher != null) {
 			fetcher.keyPressed();
 		}
@@ -109,7 +130,10 @@ public class RemoteControl extends DatabaseSubMenu implements StateListener {
 		new Thread() {
 			public void run() {
 				try {
-					api.sendKey(buttoncode);
+					if(sendKey)
+						api.sendKey(code);
+					else
+						api.action(code);
 				} catch (Exception e) {
 					Logger.getLogger().error(e);
 				}

@@ -8,16 +8,21 @@ import ch.ploetzli.xbmc.Logger;
 
 public class MidletLogger extends Logger {
 	private Vector entries = new Vector();
+	private final static int MAX_ENTRIES = 50;
 
 	public MidletLogger(MIDlet midlet) {
 	}
 
 	public synchronized void info(String s) {
+		if(entries.size() >= MAX_ENTRIES)
+			entries.removeElementAt(0);
 		entries.addElement("I "+s+"\n");
 		System.out.println(s);
 	}
 	
 	public synchronized void error(String s) {
+		if(entries.size() >= MAX_ENTRIES)
+			entries.removeElementAt(0);
 		entries.addElement("E "+s+"\n");
 		System.err.println(s);
 	}
