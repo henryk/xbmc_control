@@ -15,4 +15,11 @@ public class MusicAlbumView extends MusicDatabaseView {
 		}
 		return super.formatRow(index, data);
 	}
+
+	protected void select(String[] row) {
+		if(row.length > 1) {
+			DatabaseView v = MusicSongView.get(row[1], "idAlbum = "+row[0]);
+			showChild(v);
+		}
+	}
 }
