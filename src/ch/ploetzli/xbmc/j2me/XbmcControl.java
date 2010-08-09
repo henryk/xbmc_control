@@ -76,8 +76,10 @@ public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscover
 	 */
 	public void commandAction(Command command, Displayable displayable) {
 		if (command == this.exit) {
-			if(this.disc != null)
-				this.disc.shutdown();
+			synchronized(this) {
+				if(this.disc != null)
+					this.disc.shutdown();
+			}
 			this.notifyDestroyed();
 		} else if(command == this.connect) {
 			new Thread(
@@ -95,13 +97,22 @@ public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscover
 	
 	public void doConnect(String displayName)
 	{
-		Object[] data = (Object[])this.devices.get(displayName);
-		String address = (String)data[0];
-		int port = ((Integer)data[1]).intValue();
+		Object[] data;
+		String address;
+		int port;
 		
-		if(disc != null) {
-			disc.shutdown();
-			disc = null;
+		synchronized(this) {
+			data = (Object[])this.devices.get(displayName);
+			if(data == null) 
+				return;
+		
+			address = (String)data[0];
+			port = ((Integer)data[1]).intValue();
+		
+			if(disc != null) {
+				disc.shutdown();
+				disc = null;
+			}
 		}
 		
 		api = new HttpApi(displayName, address, port);
@@ -135,33 +146,37 @@ public class XbmcControl extends MIDlet implements CommandListener, MdnsDiscover
 	}
 	
 	public void deviceFound(String name, String address, int port) {
-		String displayName = (name + ":" + port).intern();
-		Object data = new Object[]{address, new Integer(port)};
-		if(devices.containsKey(displayName)) {
-			/* Nothing to do here */
-		} else {
-			devices.put(displayName, data);
-			deviceList.append(displayName, null);
+		synchronized(this) {
+			String displayName = (name + ":" + port).intern();
+			Object data = new Object[]{address, new Integer(port)};
+			if(devices.containsKey(displayName)) {
+				/* Nothing to do here */
+			} else {
+				devices.put(displayName, data);
+				deviceList.append(displayName, null);
+			}
+
+			deviceUpdate();
 		}
-		
-		deviceUpdate();
 	}
 	
 	public void deviceLost(String name, String address, int port) {
-		String displayName = (name + ":" + port).intern();
-		if(devices.containsKey(displayName)) {
-			devices.remove(displayName);
-			for(int i=0; i<deviceList.size(); i++) {
-				if(deviceList.getString(i).equals(displayName)) {
-					deviceList.delete(i);
-					break;
+		synchronized(this) {
+			String displayName = (name + ":" + port).intern();
+			if(devices.containsKey(displayName)) {
+				devices.remove(displayName);
+				for(int i=0; i<deviceList.size(); i++) {
+					if(deviceList.getString(i).equals(displayName)) {
+						deviceList.delete(i);
+						break;
+					}
 				}
+			} else {
+				/* Nothing to do here */
 			}
-		} else {
-			/* Nothing to do here */
+
+			deviceUpdate();
 		}
-		
-		deviceUpdate();
 	}
 	
 	public void deviceUpdate()
